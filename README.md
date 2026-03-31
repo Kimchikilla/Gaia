@@ -4,6 +4,8 @@
 
 **"The AlphaFold of Soil Microbiomes, built open-source."**
 
+**English** | [한국어](README_KO.md)
+
 Gaia is a foundation model that understands the "language" of soil microbial communities. Pre-trained on public metagenomic data, it enables soil health diagnosis, yield prediction, and microbial consortium design.
 
 ---
@@ -28,8 +30,8 @@ pip install gaia-soil
 Or install from source:
 
 ```bash
-git clone https://github.com/your-org/gaia.git
-cd gaia
+git clone https://github.com/Kimchikilla/ProjectGaia.git
+cd ProjectGaia
 pip install -e ".[dev]"
 ```
 
@@ -135,7 +137,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 @software{gaia2026,
   title={Gaia: A Foundation Model for Soil Microbiome Understanding},
   year={2026},
-  url={https://github.com/your-org/gaia}
+  url={https://github.com/Kimchikilla/ProjectGaia}
 }
 ```
 
