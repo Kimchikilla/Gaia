@@ -18,8 +18,10 @@ data_products:
     id: "DP1.00006.001"
     description: "Precipitation and air temperature"
 
-# NEON site filter (all terrestrial sites)
-site_type: "TERRESTRIAL"
+# NEON site filter (all terrestrial sites: CORE + GRADIENT)
+site_types:
+  - "CORE"
+  - "GRADIENT"
 
 # Date range
 start_date: "2017-01"

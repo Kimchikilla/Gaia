@@ -85,7 +85,7 @@ def main():
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--warmup-steps", type=int, default=1000)
     parser.add_argument("--mask-ratio", type=float, default=0.0)
-    parser.add_argument("--fp16", action="store_true", default=True)
+    parser.add_argument("--fp16", action="store_true", default=False)
     parser.add_argument("--wandb", action="store_true")
 
     args = parser.parse_args()

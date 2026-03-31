@@ -42,8 +42,9 @@ def get_neon_sites(config: dict) -> list[dict]:
     data = resp.json()
 
     sites = []
+    allowed_types = config.get("site_types", ["CORE", "GRADIENT"])
     for site in data.get("data", []):
-        if site.get("siteType") == config["site_type"]:
+        if site.get("siteType") in allowed_types:
             sites.append(
                 {
                     "site_code": site["siteCode"],
@@ -59,13 +60,27 @@ def get_neon_sites(config: dict) -> list[dict]:
     return sites
 
 
+def get_available_months(product_id: str, config: dict) -> dict[str, list[str]]:
+    """Get available months per site for a data product."""
+    url = f"{config['api_base_url']}/products/{product_id}"
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        result = {}
+        for site_info in data.get("data", {}).get("siteCodes", []):
+            result[site_info["siteCode"]] = site_info.get("availableMonths", [])
+        return result
+    except requests.RequestException as e:
+        logger.warning(f"Failed to get product info for {product_id}: {e}")
+        return {}
+
+
 def get_available_data(
-    site_code: str, product_id: str, config: dict
+    site_code: str, product_id: str, month: str, config: dict
 ) -> list[dict]:
-    """Get available data files for a site and product."""
-    url = (
-        f"{config['api_base_url']}/data/{product_id}/{site_code}"
-    )
+    """Get available data files for a site, product, and month."""
+    url = f"{config['api_base_url']}/data/{product_id}/{site_code}/{month}"
 
     try:
         resp = requests.get(url, timeout=30)
@@ -73,18 +88,19 @@ def get_available_data(
         data = resp.json()
 
         files = []
-        for month_data in data.get("data", {}).get("files", []):
-            files.append(
-                {
-                    "name": month_data.get("name", ""),
-                    "url": month_data.get("url", ""),
-                    "size": month_data.get("size", 0),
-                }
-            )
+        if data.get("data") and data["data"].get("files"):
+            for file_info in data["data"]["files"]:
+                files.append(
+                    {
+                        "name": file_info.get("name", ""),
+                        "url": file_info.get("url", ""),
+                        "size": file_info.get("size", 0),
+                    }
+                )
         return files
 
     except requests.RequestException as e:
-        logger.debug(f"No data for {site_code}/{product_id}: {e}")
+        logger.debug(f"No data for {site_code}/{product_id}/{month}: {e}")
         return []
 
 
@@ -94,25 +110,41 @@ def download_product_data(
     product_name: str,
     config: dict,
     output_dir: Path,
+    file_filter: str | None = None,
+    max_months_per_site: int | None = None,
 ) -> pd.DataFrame:
     """Download and combine data for a product across all sites."""
+    # Get available months per site
+    available = get_available_months(product_id, config)
     all_frames = []
 
     for site in tqdm(sites, desc=f"Downloading {product_name}"):
         site_code = site["site_code"]
-        files = get_available_data(site_code, product_id, config)
+        months = available.get(site_code, [])
+        if max_months_per_site:
+            months = months[:max_months_per_site]
 
-        for file_info in files:
-            file_url = file_info["url"]
-            if not file_url or not file_info["name"].endswith(".csv"):
-                continue
+        for month in months:
+            files = get_available_data(site_code, product_id, month, config)
 
-            try:
-                df = pd.read_csv(file_url)
-                df["siteID"] = site_code
-                all_frames.append(df)
-            except Exception as e:
-                logger.debug(f"Failed to read {file_url}: {e}")
+            for file_info in files:
+                file_url = file_info["url"]
+                name = file_info["name"]
+                if not file_url or not name.endswith(".csv"):
+                    continue
+                # Skip metadata/variable/validation files
+                if any(skip in name for skip in ["variables.", "validation.", "categoricalCodes."]):
+                    continue
+                # Apply file filter if specified
+                if file_filter and file_filter not in name:
+                    continue
+
+                try:
+                    df = pd.read_csv(file_url)
+                    df["siteID"] = site_code
+                    all_frames.append(df)
+                except Exception as e:
+                    logger.debug(f"Failed to read {file_url}: {e}")
 
     if all_frames:
         combined = pd.concat(all_frames, ignore_index=True)
@@ -184,49 +216,55 @@ def create_paired_dataset(
     return paired
 
 
-def collect_all(config: dict, output_dir: Path):
+def collect_all(config: dict, output_dir: Path, max_sites: int | None = None):
     """Main NEON collection pipeline."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Step 1: Get NEON sites
-    logger.info("Step 1: Fetching NEON terrestrial sites...")
+    logger.info("Step 1: Fetching NEON sites...")
     sites = get_neon_sites(config)
+    if max_sites:
+        # Filter to sites that have soil data products
+        sites_with_data = []
+        available = get_available_months(
+            config["data_products"]["soil_chemical"]["id"], config
+        )
+        for s in sites:
+            if s["site_code"] in available:
+                sites_with_data.append(s)
+            if len(sites_with_data) >= max_sites:
+                break
+        sites = sites_with_data
+        logger.info(f"Limited to {len(sites)} sites with soil data")
+
     sites_df = pd.DataFrame(sites)
     sites_df.to_csv(output_dir / "neon_sites.csv", index=False)
 
-    # Step 2: Download each data product
     products = config["data_products"]
 
-    logger.info("Step 2: Downloading soil microbiome data...")
-    microbe_df = download_product_data(
-        sites,
-        products["soil_microbe"]["id"],
-        "soil_microbe",
-        config,
-        output_dir,
-    )
-
-    logger.info("Step 3: Downloading soil chemical data...")
+    # Step 2: Download soil pH data
+    logger.info("Step 2: Downloading soil pH data...")
     chemical_df = download_product_data(
         sites,
         products["soil_chemical"]["id"],
         "soil_chemical",
         config,
         output_dir,
+        file_filter="soilpH",
+        max_months_per_site=2,
     )
 
-    logger.info("Step 4: Downloading soil physical data...")
+    # Step 3: Download soil moisture data
+    logger.info("Step 3: Downloading soil moisture data...")
     physical_df = download_product_data(
         sites,
         products["soil_physical"]["id"],
         "soil_physical",
         config,
         output_dir,
+        file_filter="soilMoisture",
+        max_months_per_site=2,
     )
-
-    # Step 3: Create paired dataset
-    logger.info("Step 5: Creating paired dataset...")
-    create_paired_dataset(microbe_df, chemical_df, physical_df, output_dir)
 
     logger.info("NEON data collection complete!")
 
@@ -240,11 +278,17 @@ def main():
         default="data/configs/neon.yaml",
         help="Path to config file",
     )
+    parser.add_argument(
+        "--max-sites",
+        type=int,
+        default=None,
+        help="Max number of sites to collect (for testing)",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
     output_dir = Path(config["output_dir"])
-    collect_all(config, output_dir)
+    collect_all(config, output_dir, max_sites=args.max_sites)
 
 
 if __name__ == "__main__":
