@@ -39,8 +39,8 @@ class SoilCorpus(Dataset):
 
 # 1. Load model + tokenizer
 print("=== Loading model ===")
-model = GPT2LMHeadModel.from_pretrained("checkpoints/gaia_expanded/best")
-with open("checkpoints/gaia_expanded/tokenizer.pkl", "rb") as f:
+model = GPT2LMHeadModel.from_pretrained("checkpoints/gaia_v3/best")
+with open("checkpoints/gaia_v3/tokenizer.pkl", "rb") as f:
     tokenizer = pickle.load(f)
 
 # Check for new genera in EMP that aren't in vocab
@@ -105,7 +105,7 @@ model.transformer.wte.weight.requires_grad = True
 print(f"Trainable: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
 args1 = TrainingArguments(
-    output_dir="checkpoints/gaia_v3/step1",
+    output_dir="checkpoints/gaia_v4/step1",
     num_train_epochs=15,
     per_device_train_batch_size=16,
     learning_rate=1e-3,
@@ -131,7 +131,7 @@ for param in model.parameters():
 print(f"Trainable: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
 args2 = TrainingArguments(
-    output_dir="checkpoints/gaia_v3/step2",
+    output_dir="checkpoints/gaia_v4/step2",
     num_train_epochs=10,
     per_device_train_batch_size=16,
     learning_rate=5e-5,
@@ -152,8 +152,8 @@ final_loss = trainer2.evaluate()["eval_loss"]
 print(f"Step 2 eval loss: {final_loss:.4f}")
 
 # Save
-trainer2.save_model("checkpoints/gaia_v3/best")
-with open("checkpoints/gaia_v3/tokenizer.pkl", "wb") as f:
+trainer2.save_model("checkpoints/gaia_v4/best")
+with open("checkpoints/gaia_v4/tokenizer.pkl", "wb") as f:
     pickle.dump(tokenizer, f)
 
 print(f"\nDone! Final eval loss: {final_loss:.4f}")
