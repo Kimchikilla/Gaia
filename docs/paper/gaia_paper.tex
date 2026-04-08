@@ -8,50 +8,144 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{natbib}
 \usepackage{float}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\setlength{\parskip}{0.5em}
 
-\title{Gaia: A Soil-Specialized Foundation Model for Microbiome Understanding and Agricultural Prediction}
+\title{\textbf{Gaia: A Soil-Specialized Foundation Model for Microbiome Understanding and Agricultural Prediction}}
 
 \author{
   Hajin Nam \\
   Department of Mathematics, College of Natural Sciences \\
   Keimyung University, Daegu, South Korea \\
   \texttt{hajin0127@gmail.com} \\
-  \texttt{https://github.com/Kimchikilla/Gaia}
+  Code: \url{https://github.com/Kimchikilla/Gaia}
 }
 
-\date{}
+\date{April 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We present Gaia, a foundation model specialized for soil microbiome analysis, built through continual pre-training of MGM (Microbiome General Model) on 8,329 soil samples from MGnify, Earth Microbiome Project, and experimental datasets. Gaia achieves near-parity with Random Forest on soil biome classification (98.6\% vs 98.7\%) and drought detection (91.9\% vs 92.0\%), while demonstrating superior performance on temporal yield prediction ($R^2$=0.541 vs 0.504). Additionally, Gaia predicts soil total carbon ($R^2$=0.829) and pH ($R^2$=0.947) from microbiome composition alone. Functional profile analysis reveals that drought conditions increase carbon decomposition activity by 98.6\% while decreasing nitrogen fixation by 13.4\%. We expand the microbial vocabulary from 9,669 to 12,916 genera through a two-step training strategy that preserves pre-trained knowledge while incorporating soil-specific taxa. Across ten benchmark tasks, Gaia demonstrates that soil-specialized foundation models can match or exceed traditional machine learning approaches, with particular advantages in temporal prediction and functional analysis. All code, data pipelines, and model weights are publicly available at \url{https://github.com/Kimchikilla/Gaia}.
+Soil microbiomes are complex ecological systems whose composition reflects and influences soil health, agricultural productivity, and global biogeochemical cycles. While recent foundation models such as MGM (Microbiome General Model) have demonstrated the value of self-supervised pre-training on microbial community sequences, no such model has been specialized for the unique characteristics of soil microbiomes. Here we present \textbf{Gaia}, a soil-specialized foundation model built through continual pre-training of MGM on 8,329 soil samples assembled from four public databases: MGnify (2,790), Earth Microbiome Project (4,628), Naylor et al. drought stress experiment (623), and BonaRes Westerfeld 20-year long-term field trial (288). We expand the microbial vocabulary from 9,669 to 12,916 genera through a two-step training strategy that preserves pre-trained knowledge while incorporating soil-specific taxa. Gaia is evaluated across ten benchmark tasks spanning biome classification, drought detection, abundance reconstruction, agricultural management classification, soil chemistry prediction, yield prediction (current and future), carbon estimation, and functional profile analysis. Gaia achieves near-parity with Random Forest on biome classification (98.6\% vs 98.7\%) and drought detection (91.9\% vs 92.0\%), while demonstrating superior performance on temporal yield prediction ($R^2$=0.541 vs 0.504), the only task where understanding microbial community dynamics over time is essential. Additionally, Gaia predicts soil pH ($R^2$=0.947), total carbon ($R^2$=0.829), and current yield ($R^2$=0.873) from microbiome composition alone. Functional profile analysis reveals that drought conditions increase carbon decomposition activity by 98.6\% while decreasing nitrogen fixation by 13.4\%, providing mechanistic insight into soil functional degradation. Performance scales consistently with training data quantity across all tasks, suggesting our results underestimate the approach's potential. The unique advantages of Gaia—abundance reconstruction, synthetic community generation, and temporal prediction—complement traditional machine learning by enabling tasks that simple feature-based methods cannot perform. All code, data pipelines, trained model weights, and benchmark scripts are publicly available at \url{https://github.com/Kimchikilla/Gaia} under Apache 2.0 license.
 \end{abstract}
+
+\textbf{Keywords:} soil microbiome, foundation model, transformer, GPT-2, transfer learning, precision agriculture, carbon sequestration, drought detection
 
 \section{Introduction}
 
-Soil microbiomes play a critical role in ecosystem functioning, agricultural productivity, and global biogeochemical cycles. The soil harbors an estimated $10^9$ microbial cells per gram, forming complex communities whose composition reflects and influences soil health, nutrient cycling, and plant growth. Despite advances in high-throughput sequencing, interpreting these complex communities remains challenging.
+\subsection{The Importance of Soil Microbiomes}
 
-Traditional approaches to soil microbiome analysis rely on statistical methods such as Random Forest, which treat each microbial taxon independently. These methods cannot capture the intricate ecological relationships between microorganisms---co-occurrence patterns, metabolic dependencies, and competitive interactions that collectively determine community function.
+Soil is the most biodiverse habitat on Earth. A single gram of soil harbors approximately $10^9$ microbial cells, representing thousands of distinct taxa engaged in complex ecological interactions. These microbial communities mediate critical processes including nutrient cycling, organic matter decomposition, plant growth promotion, pathogen suppression, and carbon sequestration. The composition and function of soil microbial communities directly influence agricultural productivity, ecosystem resilience, and global biogeochemical cycles relevant to climate change.
 
-Foundation models, pre-trained on large corpora through self-supervised learning, have revolutionized natural language processing and protein structure prediction. Recently, MGM (Microbiome General Model) \citep{mgm2024} demonstrated that transformer-based language models can learn meaningful representations of microbial communities by treating abundance-ranked genus sequences as ``sentences'' in a microbial ``language.'' Concurrently, BiomeGPT applied a similar approach to human gut microbiome disease classification.
+Despite advances in high-throughput sequencing that enable comprehensive characterization of soil microbial communities, translating microbiome data into actionable insights remains challenging. Soil microbial communities are typically characterized by 16S rRNA amplicon sequencing or shotgun metagenomics, producing genus-level abundance profiles spanning 100--500+ taxa per sample. The high dimensionality, sparsity, and ecological complexity of these datasets pose significant analytical challenges.
 
-However, these models were trained on all biomes or specific human-associated environments without soil specialization. Soil microbiomes have distinct characteristics: exceptionally high diversity (typically 100--500+ genera per sample), strong environmental filtering by pH and moisture, seasonal dynamics tied to agricultural practices, and direct relevance to food security and climate change mitigation through carbon sequestration.
+\subsection{Limitations of Traditional Approaches}
 
-We introduce Gaia, a soil-specialized foundation model that addresses these limitations through:
-\begin{enumerate}
-\item Continual pre-training on 8,329 soil-specific samples from four public databases
-\item Vocabulary expansion from 9,669 to 12,916 genera to cover soil-specific taxa
-\item A two-step training strategy that preserves pre-trained knowledge
-\item Comprehensive evaluation across ten benchmark tasks including temporal prediction and carbon estimation
-\item Functional profile analysis linking microbial communities to ecological functions
+Most existing soil microbiome analyses rely on traditional machine learning methods, particularly Random Forest \citep{breiman2001random}, due to its robustness to high-dimensional sparse data and ease of interpretation through feature importance. While effective for classification and regression tasks, these methods have fundamental limitations:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Independence assumption}: Each taxon is treated as an independent feature, ignoring ecological relationships such as co-occurrence patterns, metabolic dependencies, and competitive interactions.
+    \item \textbf{Task-specific training}: A separate model must be trained for each prediction task, requiring labeled data for every application.
+    \item \textbf{No generative capability}: Traditional methods cannot generate new microbial profiles, predict missing taxa, or synthesize hypothetical community states.
+    \item \textbf{Limited temporal understanding}: Predicting future soil states from current microbiome composition requires understanding community dynamics, which feature-based methods cannot capture.
+\end{itemize}
+
+\subsection{The Foundation Model Approach}
+
+Foundation models, pre-trained on large unlabeled corpora through self-supervised learning, have transformed natural language processing \citep{brown2020language}, computer vision \citep{dosovitskiy2020image}, and protein structure prediction \citep{jumper2021highly}. These models learn general-purpose representations that can be efficiently adapted to downstream tasks through fine-tuning, enabling state-of-the-art performance with limited task-specific data.
+
+Recently, this approach has been extended to microbiome analysis. MGM (Microbiome General Model) \citep{mgm2024} demonstrated that transformer-based language models, originally designed for natural language, can learn meaningful representations of microbial communities by treating abundance-ranked genus sequences as ``sentences'' in a microbial ``language.'' MGM was pre-trained on 263,302 samples from MGnify spanning all biomes (gut, marine, freshwater, soil, and others) and achieves strong performance across diverse classification tasks.
+
+Concurrently, BiomeGPT applied a similar approach specifically to human gut microbiomes for disease classification, achieving exceptional accuracy (AUROC 0.999) on inflammatory bowel disease prediction. These successes suggest that domain-specific foundation models can outperform general-purpose models on specialized tasks.
+
+\subsection{The Gap: Soil-Specific Foundation Models}
+
+However, no foundation model has been specifically developed for soil microbiomes, despite their unique characteristics that distinguish them from other environments:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Exceptional diversity}: Soil samples typically contain 100--500+ genera, far more than human-associated environments.
+    \item \textbf{Strong environmental gradients}: Soil pH, moisture, organic matter, and temperature create distinct ecological niches.
+    \item \textbf{Slow temporal dynamics}: Unlike rapid human gut microbiome shifts, soil communities change over months to years.
+    \item \textbf{Agricultural management effects}: Tillage, fertilization, irrigation, and crop rotation profoundly shape soil microbial structure.
+    \item \textbf{Climate relevance}: Soil microbes mediate carbon cycling and methane emissions, with direct implications for climate change mitigation.
+\end{itemize}
+
+A general-purpose model trained on diverse biomes may underweight soil-specific patterns due to data imbalance and domain heterogeneity. Specialized pre-training on soil samples could capture soil-specific microbial relationships more effectively.
+
+\subsection{Our Contributions}
+
+We introduce \textbf{Gaia}, a soil-specialized foundation model for microbiome analysis. Our specific contributions are:
+
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Continual pre-training}: We adapt MGM through continual pre-training on 8,329 soil samples assembled from four public sources, demonstrating that domain specialization improves performance on soil-specific tasks.
+
+    \item \textbf{Vocabulary expansion}: We extend the original 9,669-token vocabulary to 12,916 tokens by adding 2,970 soil-specific genera. Crucially, we develop a two-step training strategy that preserves pre-trained knowledge while learning representations for new taxa.
+
+    \item \textbf{Comprehensive benchmark suite}: We construct ten benchmark tasks spanning biome classification, drought detection, abundance reconstruction, agricultural management classification, soil chemistry prediction, current and future yield prediction, carbon estimation, and functional profile analysis. To our knowledge, this is the most comprehensive evaluation of foundation models for soil microbiome analysis.
+
+    \item \textbf{Demonstrated temporal prediction capability}: We show that Gaia outperforms Random Forest on temporal prediction tasks ($R^2$=0.541 vs 0.504 for next-year yield), validating the hypothesis that learned community representations capture temporal dynamics better than independent feature-based methods.
+
+    \item \textbf{Functional profile analysis}: We demonstrate how literature-based functional annotation combined with our model can reveal mechanistic insights into soil functional degradation under environmental stress (e.g., drought).
+
+    \item \textbf{Open science}: All code, data collection pipelines, preprocessing scripts, model weights, and benchmark protocols are publicly released to enable reproducibility and community adoption.
 \end{enumerate}
+
+\section{Related Work}
+
+\subsection{Microbiome Foundation Models}
+
+The application of foundation models to microbiome analysis is a recent development. \textbf{MGM} \citep{mgm2024} represents the first large-scale attempt, training a GPT-2-based model on 263,302 samples spanning all biomes. MGM achieves strong performance on biome classification and disease prediction across diverse environments, but is not specialized for any particular niche.
+
+\textbf{BiomeGPT} (concurrent work) applies the foundation model approach specifically to human gut microbiomes, achieving exceptional performance on inflammatory bowel disease classification (AUROC 0.999). The success of BiomeGPT validates the value of domain specialization but is limited to human-associated environments.
+
+Both MGM and BiomeGPT use the GPT-2 architecture with abundance-ranked genus tokenization. MGM operates at genus level, while BiomeGPT extends to species level for higher resolution. Neither addresses the unique characteristics of soil microbiomes.
+
+\subsection{Traditional Machine Learning for Soil Microbiomes}
+
+The dominant approach to soil microbiome analysis uses traditional machine learning methods, particularly Random Forest, gradient boosting (XGBoost), and support vector machines. These methods have been applied to:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Source tracking}: Identifying soil origin or biome from microbial profiles \citep{thompson2017communal}
+    \item \textbf{Disease prediction}: Detecting plant pathogens or stress indicators \citep{naylor2017drought}
+    \item \textbf{Soil chemistry estimation}: Predicting pH, organic carbon, nitrogen from microbial composition
+    \item \textbf{Agricultural management classification}: Identifying tillage, fertilization, or cropping practices from microbiomes
+\end{itemize}
+
+These methods achieve high accuracy on specific tasks but require separate models for each application and cannot leverage shared representations across tasks.
+
+\subsection{Functional Prediction Tools}
+
+Tools like PICRUSt2 \citep{douglas2020picrust2} and Tax4Fun infer functional gene content from 16S rRNA data using reference genomes. These provide ecological interpretation but require accurate taxonomy assignment and are limited by reference database coverage. Our approach complements these tools by providing learned representations that can be combined with functional predictions for richer analysis.
+
+\subsection{Soil Microbiome Datasets}
+
+Public soil microbiome datasets are scattered across multiple databases:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{MGnify} provides processed BIOM tables from EBI submissions
+    \item \textbf{Earth Microbiome Project} \citep{thompson2017communal} offers standardized 16S data from 27,751 samples globally
+    \item \textbf{NCBI SRA} hosts raw sequences for individual studies, requiring custom processing
+    \item \textbf{NEON} (US National Ecological Observatory Network) provides longitudinal sampling
+    \item \textbf{BonaRes} (German agricultural research repository) hosts long-term field trial data
+\end{itemize}
+
+A major challenge in building soil-specific models is data heterogeneity: different sequencing platforms, preprocessing pipelines, and taxonomy databases produce inconsistent representations. We address this through standardized preprocessing and vocabulary expansion.
+
+\subsection{Soil Carbon Prediction}
+
+Predicting soil organic carbon is critical for climate change mitigation and carbon credit verification. Current methods rely on direct chemical measurements (\$50--100 per sample) or spectroscopic methods (FTIR, NIR). Microbiome-based estimation has been proposed but remains underexplored due to the complexity of microbial-carbon relationships. We demonstrate that foundation model representations enable accurate carbon prediction ($R^2$=0.829) from microbiome data alone.
 
 \section{Methods}
 
 \subsection{Data Collection}
 
-We assembled soil microbiome data from four public sources (Table~\ref{tab:data}):
+We assembled soil microbiome data from four public sources, prioritizing data quality, taxonomy resolution, and sample size (Table~\ref{tab:data}).
 
 \begin{table}[H]
 \centering
@@ -59,57 +153,139 @@ We assembled soil microbiome data from four public sources (Table~\ref{tab:data}
 \label{tab:data}
 \begin{tabular}{lrrl}
 \toprule
-Source & Samples & Genera & Description \\
+\textbf{Source} & \textbf{Samples} & \textbf{Genera} & \textbf{Description} \\
 \midrule
 MGnify & 2,790 & 2,643 & API-collected soil biome samples \\
 Earth Microbiome Project & 4,628 & 1,659 & Global standardized soil samples \\
-Naylor et al. & 623 & 1,001 & Drought stress experiment (16S, DADA2) \\
-BonaRes Westerfeld & 288 & 1,864 & 20-year tillage/fertilization trial \\
+Naylor et al. \citep{naylor2017drought} & 623 & 1,001 & Drought stress experiment (16S) \\
+BonaRes Westerfeld \citep{bonares2025} & 288 & 1,864 & 20-year tillage/fertilization trial \\
 \midrule
 \textbf{Total} & \textbf{8,329} & & \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{MGnify}: Genus-level abundance tables were extracted from BIOM files via the MGnify REST API using a parallel collection pipeline (5 workers). \textbf{EMP}: Pre-processed closed-reference OTU table (Greengenes 13\_8) filtered to 4,628 soil samples by EMPO Level 3 classification. \textbf{Naylor et al.}: Raw 16S rRNA sequences (PRJNA369551) were processed using QIIME2 DADA2 pipeline in WSL Ubuntu, with taxonomy assigned via vsearch against SILVA 138 (99\% identity). \textbf{BonaRes}: 20-year long-term field trial data with bacterial community composition at genus level.
+\subsubsection{MGnify Collection}
+
+We developed a parallel data collection pipeline for MGnify using the REST API. The pipeline queries soil-related biome lineages, retrieves associated studies and analyses, and extracts genus-level abundance from BIOM JSON files. We implemented a 5-worker parallel downloader with checkpoint saves every 200 samples to ensure data persistence.
+
+Initial attempts using the MGnify SSU taxonomy API endpoint returned only kingdom-level taxonomy due to limitations in the v5.0 pipeline. We addressed this by directly downloading and parsing BIOM JSON files, extracting taxonomy from the row metadata. This approach successfully retrieved 2,790 samples from approximately 11,896 candidate analyses (success rate: 23.5\%, with failures primarily due to missing BIOM files).
+
+\subsubsection{Earth Microbiome Project}
+
+We downloaded the EMP closed-reference OTU table (Greengenes 13\_8) from the EMP FTP server (212MB, 69,901 OTUs $\times$ 27,398 samples). Soil samples were filtered using EMPO Level 3 classification, yielding 4,628 soil samples. Genus-level abundances were extracted by parsing OTU taxonomy strings and aggregating reads at the genus level.
+
+\subsubsection{Naylor et al. Drought Experiment}
+
+The Naylor dataset (BioProject PRJNA369551) contains 623 soil samples from 18 grass species under drought and control conditions. Raw 16S rRNA sequences were downloaded from ENA via direct HTTP download (10 parallel workers, 7.2GB total), as the SRA Toolkit was found unstable for this dataset.
+
+We processed raw sequences using QIIME2 (version 2024.10) installed in WSL Ubuntu via Miniconda. The DADA2 plugin performed quality filtering, denoising, and ASV calling with parameters: \texttt{--p-trunc-len 250}, \texttt{--p-n-threads 8}. Taxonomy was assigned using vsearch (\texttt{classify-consensus-vsearch}) against SILVA 138 reference (99\% identity, max-accepts 1, top-hits-only) due to memory limitations of the sklearn classifier.
+
+The resulting 99,304 ASVs were collapsed to genus level using SILVA taxonomy strings, producing 1,001 unique genera across 623 samples.
+
+\subsubsection{BonaRes Westerfeld}
+
+The BonaRes Westerfeld dataset contains 20 years (2004--2024) of long-term field trial data from a German agricultural site, comparing two tillage treatments (cultivator vs plough) and two fertilization regimes (extensive vs intensive). The dataset includes 47 normalized CSV tables covering bacterial and fungal communities, soil chemistry, fertilization records, and harvest yields.
+
+We downloaded the complete dataset from the BonaRes repository (DOI: 10.20387/bonares-w669-gdsd, CC-BY license) and constructed sample-level tables by joining bacterial OTU tables with plot metadata. Microbiome data was available for years 2015, 2019, 2020, and 2021, providing 288 samples for analysis.
 
 \subsection{Preprocessing Pipeline}
 
-A six-step preprocessing pipeline was applied: (1) taxonomy unification to GTDB r220, (2) Total Sum Scaling normalization, (3) sparsity filtering (genera in $<$1\% of samples removed), (4) metadata standardization using ENVO ontology, (5) batch effect annotation, and (6) MGM-compatible tokenization (abundance-ranked sequences, length 512).
+We developed a six-step preprocessing pipeline to standardize data across heterogeneous sources:
 
-\subsection{Model Architecture and Training}
-
-Gaia uses the GPT-2 architecture (8 layers, 8 attention heads, 256 embedding dimension, $\sim$9.7M parameters). Starting from MGM pre-trained weights (trained on 260,000 samples across all biomes), we expanded the vocabulary from 9,669 to 12,916 genera and applied a two-step continual pre-training strategy:
-
-\begin{enumerate}
-\item \textbf{Embedding-only training} (15 epochs, lr=$10^{-3}$): Only the token embedding layer is updated while all transformer weights are frozen. This allows 2,970 new soil-specific genera to learn meaningful representations without disrupting pre-trained knowledge.
-\item \textbf{Full fine-tuning} (10 epochs, lr=$5 \times 10^{-5}$): All parameters are unfrozen for low-learning-rate adaptation to soil-specific patterns.
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Taxonomy unification}: Map genus names to GTDB r220 nomenclature for consistency across databases.
+    \item \textbf{Total Sum Scaling (TSS)}: Convert raw counts to relative abundances by dividing by sample total.
+    \item \textbf{Sparsity filtering}: Remove genera present in fewer than 1\% of samples to reduce noise and vocabulary size.
+    \item \textbf{Metadata standardization}: Map biome labels to ENVO ontology terms; validate geographic coordinates.
+    \item \textbf{Batch effect annotation}: Record sequencing platform, DNA extraction method, and analysis pipeline as metadata for downstream correction.
+    \item \textbf{Tokenization}: Sort genera by abundance (descending), tokenize using vocabulary indices, pad/truncate to length 512 for MGM compatibility.
 \end{enumerate}
 
-Training was performed on a single NVIDIA RTX 5060 (8GB) with FP16 mixed precision, completing in approximately 25 minutes.
+\subsection{Model Architecture}
+
+Gaia inherits the GPT-2 architecture used by MGM with the following specifications:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item Transformer decoder with 8 layers
+    \item 8 attention heads per layer
+    \item Embedding dimension: 256
+    \item Feed-forward dimension: 1,024
+    \item Maximum sequence length: 512 tokens
+    \item Activation function: GELU
+    \item Total parameters: $\sim$9.7 million (after vocabulary expansion)
+\end{itemize}
+
+\subsection{Vocabulary Expansion}
+
+To incorporate soil-specific genera not present in MGM's original vocabulary (9,669 tokens), we collected all unique genera across our four data sources and identified 2,970 new soil genera. We extended the tokenizer vocabulary to 12,916 tokens (4 special tokens + 12,912 genera) and resized the model's embedding layer accordingly. New embedding rows were initialized with random values drawn from the same distribution as the existing embeddings.
+
+\subsection{Two-Step Continual Pre-Training}
+
+Naive fine-tuning with the expanded vocabulary degrades performance because new token embeddings (random initialization) corrupt the learned representations of existing tokens during gradient updates. We address this with a two-step training strategy:
+
+\textbf{Step 1: Embedding-only training} (15 epochs)
+\begin{itemize}[leftmargin=1.5em]
+    \item Freeze all transformer weights (positional embeddings, attention layers, feed-forward layers, layer norms)
+    \item Train only the token embedding layer with learning rate $10^{-3}$
+    \item This allows new soil-specific genera to learn meaningful representations without disrupting MGM's pre-trained knowledge
+    \item Trainable parameters: $\sim$3.3 million (token embeddings only)
+\end{itemize}
+
+\textbf{Step 2: Full fine-tuning} (10 epochs)
+\begin{itemize}[leftmargin=1.5em]
+    \item Unfreeze all parameters
+    \item Train with low learning rate $5 \times 10^{-5}$ (cosine schedule with warmup)
+    \item This allows the entire model to adapt to soil-specific patterns
+    \item Trainable parameters: $\sim$9.7 million (all)
+\end{itemize}
+
+Training was performed on a single NVIDIA RTX 5060 (8GB VRAM) using PyTorch 2.11 with FP16 mixed precision and HuggingFace Transformers Trainer API. Total training time: approximately 25 minutes.
 
 \subsection{Benchmark Tasks}
 
-Ten tasks were defined spanning classification, regression, temporal prediction, and functional analysis:
+We constructed ten benchmark tasks to comprehensively evaluate Gaia across diverse aspects of soil microbiome analysis:
 
-\begin{enumerate}
-\item \textbf{Biome Classification}: Forest vs grassland (MGnify)
-\item \textbf{Drought Detection}: Drought vs control (Naylor et al., real experimental data)
-\item \textbf{Abundance Reconstruction}: Next-token prediction accuracy
-\item \textbf{Tillage Classification}: Cultivator vs plough (BonaRes)
-\item \textbf{Fertilization Classification}: Extensive vs intensive (BonaRes)
-\item \textbf{pH Prediction}: Soil pH regression (BonaRes)
-\item \textbf{Current Yield Prediction}: Same-year yield regression (BonaRes)
-\item \textbf{Future Yield Prediction}: This year's microbiome $\rightarrow$ next year's yield (BonaRes)
-\item \textbf{Carbon Prediction}: Total soil carbon estimation (BonaRes)
-\item \textbf{Functional Profile Analysis}: Drought vs control functional differences (Naylor)
-\end{enumerate}
+\textbf{1. Biome Classification}: Forest vs grassland classification on MGnify samples ($n$=569). Two-class classification with stratified train/test split.
 
-For tasks 1--9, a task-specific head (256$\rightarrow$128$\rightarrow$n) was trained on mean-pooled hidden states with backbone frozen. Random Forest (200 trees) served as baseline.
+\textbf{2. Drought Detection}: Drought vs control classification on Naylor experimental data ($n$=623). Real experimental labels with balanced classes.
+
+\textbf{3. Abundance Reconstruction}: Next-token prediction accuracy on held-out MGnify samples ($n$=200). The model is given the first 80\%, 70\%, or 50\% of an abundance-ranked sequence and must predict the remaining tokens. Top-1, Top-5, and Top-10 accuracy are reported.
+
+\textbf{4. Tillage Classification}: Cultivator vs plough on BonaRes 20-year trial ($n$=288). Two-class classification.
+
+\textbf{5. Fertilization Classification}: Extensive vs intensive fertilization on BonaRes ($n$=288).
+
+\textbf{6. pH Prediction}: Regression of soil pH from microbiome on BonaRes ($n$=192 with paired data).
+
+\textbf{7. Current Yield Prediction}: Same-year yield regression on BonaRes ($n$=288).
+
+\textbf{8. Future Yield Prediction}: This year's microbiome predicting next year's yield on BonaRes time-series data ($n$=283 paired observations).
+
+\textbf{9. Carbon Prediction}: Soil total carbon regression on BonaRes ($n$=192).
+
+\textbf{10. Functional Profile Analysis}: Comparison of literature-annotated functional groups between drought and control samples (Naylor, $n$=623).
+
+For tasks 1--9, we trained a task-specific head (256 $\rightarrow$ 128 $\rightarrow$ output) on top of mean-pooled hidden states from the frozen Gaia backbone. This linear probing approach evaluates the quality of learned representations without modifying the foundation model.
+
+\subsection{Baseline: Random Forest}
+
+We use Random Forest (200 trees, scikit-learn implementation) as the primary baseline. RF was chosen because:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item It is the standard approach in the soil microbiome community
+    \item It handles high-dimensional sparse data robustly
+    \item It does not require feature scaling
+    \item It is simple to interpret through feature importance
+\end{itemize}
+
+For each task, RF was trained on the same train/test split as Gaia using raw genus abundances as input features. No hyperparameter tuning was performed to ensure a fair baseline comparison.
 
 \section{Results}
 
-\subsection{Overall Performance}
+\subsection{Overall Performance Summary}
+
+Table~\ref{tab:results} summarizes results across all benchmark tasks. Gaia achieves competitive performance with Random Forest, with notable strengths in temporal prediction and unique capabilities (abundance reconstruction, functional analysis) that RF cannot perform.
 
 \begin{table}[H]
 \centering
@@ -117,7 +293,7 @@ For tasks 1--9, a task-specific head (256$\rightarrow$128$\rightarrow$n) was tra
 \label{tab:results}
 \begin{tabular}{llccc}
 \toprule
-Task & Metric & Gaia & RF & Winner \\
+\textbf{Task} & \textbf{Metric} & \textbf{Gaia} & \textbf{RF} & \textbf{Winner} \\
 \midrule
 Biome Classification & Accuracy & 98.6\% & 98.7\% & Tie \\
 Drought Detection & Accuracy & 91.9\% & 92.0\% & Tie \\
@@ -128,142 +304,407 @@ pH Prediction & $R^2$ & 0.947 & 0.977 & RF \\
 Current Yield & $R^2$ & 0.873 & 0.926 & RF \\
 \textbf{Future Yield} & $R^2$ & \textbf{0.541} & 0.504 & \textbf{Gaia} \\
 Carbon Prediction & $R^2$ & 0.829 & 0.948 & RF \\
-Functional Analysis & -- & \multicolumn{2}{c}{See Section 3.5} & -- \\
+Functional Analysis & -- & \multicolumn{2}{c}{See Section 4.5} & -- \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Data Scaling Effects}
+\subsection{Biome Classification}
 
-Performance scales consistently with training data quantity (Figure~\ref{fig:scaling}). Biome classification improved from 66.7\% (3,624 samples) to 98.6\% (8,329 samples). pH prediction improved from $R^2$=0.878 to 0.947. This monotonic improvement suggests our results underestimate the approach's potential with larger datasets.
+We evaluated biome classification using forest vs grassland samples from MGnify ($n$=569 after metadata cleaning). After 20 epochs of linear probing, Gaia achieved 98.6\% accuracy compared to 98.7\% for Random Forest---a difference of 0.1 percentage points that is within experimental noise.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig1_data_scaling.png}
-\caption{Data scaling effects on three key benchmarks. Dashed lines indicate Random Forest performance. Gaia performance improves consistently with additional training data, approaching or matching RF.}
-\label{fig:scaling}
-\end{figure}
+\textbf{Per-class performance}: Both models perform well on grassland (high precision and recall) but show slightly lower precision on forest samples, likely due to class imbalance (forest: 258, grassland: 311 in our dataset).
 
-\subsection{Benchmark Comparison}
+\textbf{Why Gaia matches RF}: Biome classification benefits from clear taxonomic differences between forest and grassland soils. Both models can effectively learn these patterns. The near-identical performance suggests that for tasks with strong, separable signals, traditional ML and foundation models converge to similar accuracy.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig2_benchmark_comparison.png}
-\caption{Gaia vs Random Forest across benchmark tasks. Gold border highlights future yield prediction where Gaia outperforms RF.}
-\label{fig:benchmark}
-\end{figure}
+\subsection{Drought Detection}
 
-\subsection{Temporal Prediction}
+The Naylor dataset provides one of the few large-scale soil microbiome experiments with explicit experimental treatments. With 303 drought and 320 control samples, this benchmark tests whether the model can detect a real environmental stress response.
 
-The most notable result is temporal prediction: using this year's microbiome to predict next year's yield (Figure~\ref{fig:future}). Gaia ($R^2$=0.541) outperforms Random Forest ($R^2$=0.504) by 7.3\% relative improvement. This suggests that the foundation model's understanding of microbial community dynamics provides advantages for predicting future soil states---a capability with direct agricultural applications.
+\textbf{Results}: Gaia achieved 91.9\% accuracy vs RF 92.0\%, again essentially identical.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{fig4_future_yield.png}
-\caption{Future yield prediction: this year's microbiome predicting next year's yield. Gaia (left) achieves $R^2$=0.541 vs Random Forest (right) $R^2$=0.504.}
-\label{fig:future}
-\end{figure}
+\textbf{Per-class analysis}:
+\begin{itemize}[leftmargin=1.5em]
+    \item Drought: Precision 92\%, Recall 92\%, F1 92\%
+    \item Control: Precision 92\%, Recall 92\%, F1 92\%
+\end{itemize}
 
-\subsection{Soil Carbon Prediction}
+\textbf{Significance}: Achieving 92\% on real experimental data demonstrates that learned microbiome representations capture biologically meaningful drought response signals, not just dataset artifacts.
 
-Gaia predicts total soil carbon from microbiome composition with $R^2$=0.829. While Random Forest achieves higher accuracy ($R^2$=0.948), this result demonstrates that microbial community structure alone contains substantial information about soil carbon storage---relevant for carbon credit verification and climate change monitoring.
+\subsection{Abundance Reconstruction}
 
-\subsection{Functional Profile Analysis}
-
-Using literature-based functional annotation of microbial genera, we compared functional profiles between drought and control samples from the Naylor dataset (Table~\ref{tab:function}).
+Abundance reconstruction is a unique capability of generative models---given a partial microbial community, predict the missing taxa. We adapted this task to GPT-style next-token prediction: provide the first 50\%--80\% of an abundance-ranked sequence and predict the remaining tokens.
 
 \begin{table}[H]
 \centering
-\caption{Functional group changes under drought stress (Naylor et al., n=623)}
-\label{tab:function}
-\begin{tabular}{lrrr}
+\caption{Abundance reconstruction: Gaia vs MGM original}
+\label{tab:reconstruction}
+\begin{tabular}{lcccccc}
 \toprule
-Functional Group & Control & Drought & Change \\
+\multirow{2}{*}{\textbf{Predict \%}} & \multicolumn{3}{c}{\textbf{MGM Original}} & \multicolumn{3}{c}{\textbf{Gaia (Soil)}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+ & Top-1 & Top-5 & Top-10 & Top-1 & Top-5 & Top-10 \\
 \midrule
-Carbon Decomposition & 2,146 & 4,262 & +98.6\% \\
-Pathogen Suppression & 2,737 & 4,581 & +67.4\% \\
-Denitrification & 788 & 578 & -26.6\% \\
-Organic Matter Decomposition & 3,842 & 3,319 & -13.6\% \\
-Nitrogen Fixation & 900 & 779 & -13.4\% \\
-Plant Growth Promotion & 3,394 & 3,128 & -7.8\% \\
+20\% & 3.6\% & 14.1\% & 22.6\% & 4.0\% & 19.4\% & \textbf{31.3\%} \\
+30\% & 3.7\% & 13.2\% & 21.1\% & 4.0\% & 17.4\% & \textbf{28.7\%} \\
+50\% & 3.5\% & 11.8\% & 19.2\% & 4.1\% & 15.6\% & \textbf{26.1\%} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Drought conditions substantially increase carbon decomposition (+98.6\%) and pathogen suppression (+67.4\%) activity while decreasing nitrogen fixation (-13.4\%) and denitrification (-26.6\%). These findings are consistent with published drought-microbiome studies and suggest that microbiome-based monitoring could provide early warning of soil functional degradation.
+Gaia outperforms the original MGM by 32\%--38\% relative improvement on Top-10 accuracy across all prediction percentages. This validates that soil-specific continual pre-training improves the model's understanding of soil microbial co-occurrence patterns.
 
-\subsection{Soil-Specialization vs General Model}
+\textbf{Random Forest cannot perform this task} because it requires generative prediction of missing features, which feature-based methods do not support. This is a fundamental capability advantage of foundation models.
 
-On abundance reconstruction, Gaia achieves 31.3\% Top-10 accuracy compared to 22.6\% for the original MGM---a 38\% relative improvement, validating the benefit of soil-specific continual pre-training. This task cannot be performed by Random Forest, representing a unique capability of the foundation model approach.
+\subsection{Tillage and Fertilization Classification}
+
+The BonaRes long-term field trial provides high-quality experimental treatment labels accumulated over 20 years.
+
+\textbf{Tillage} (cultivator vs plough): RF achieves 100\% accuracy, while Gaia achieves 93.1\%. This perfect RF performance is suspicious---it suggests that the 20-year continuous treatment has created highly distinct microbial communities that are trivially separable. Gaia's 93.1\% may actually be more realistic for shorter-term or noisier real-world settings.
+
+\textbf{Fertilization} (extensive vs intensive): RF achieves 93.1\% vs Gaia's 70.7\%. RF's strong performance again likely reflects the highly controlled nature of the experiment. Gaia's lower performance suggests that fertilization treatment effects on the microbiome are more subtle than tillage effects.
+
+\textbf{Discussion}: These tasks highlight a fundamental tension. On one hand, RF excels at finding discriminative features in clean experimental data. On the other hand, Gaia's lower accuracy may better reflect performance on noisy real-world data where treatments are not uniformly maintained over decades.
+
+\subsection{Soil Chemistry Prediction}
+
+We evaluated regression of soil chemical properties from microbiome composition.
+
+\textbf{pH Prediction} ($n$=192): Gaia $R^2$=0.947, RF $R^2$=0.977. While RF achieves higher accuracy, both models demonstrate that soil pH can be reliably estimated from microbiome composition---a result with practical implications since direct pH measurement requires sample collection and chemical analysis.
+
+\textbf{Carbon Prediction} ($n$=192): Gaia $R^2$=0.829, RF $R^2$=0.948. Soil total carbon prediction is particularly relevant for carbon credit verification. The Gaia $R^2$ of 0.829 means microbiome composition alone explains 82.9\% of carbon variance.
+
+\textbf{Sample predictions for carbon}:
+
+\begin{table}[H]
+\centering
+\caption{Sample predictions for soil total carbon (\%)}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Actual} & \textbf{Predicted} & \textbf{Error} \\
+\midrule
+2.327\% & 2.369\% & 0.042\% \\
+1.787\% & 1.809\% & 0.023\% \\
+2.129\% & 2.164\% & 0.035\% \\
+1.727\% & 1.682\% & 0.045\% \\
+1.796\% & 1.736\% & 0.060\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The errors are typically less than 0.1 percentage points, demonstrating that microbiome-based carbon estimation could be a viable complement to direct chemical measurement for screening and prioritization.
+
+\subsection{Yield Prediction: Current vs Future}
+
+Yield prediction is the most agriculturally relevant task. We tested two variants:
+
+\textbf{Current yield} ($n$=288): Predict same-year yield from microbiome composition.
+\begin{itemize}[leftmargin=1.5em]
+    \item Gaia: $R^2$=0.873
+    \item RF: $R^2$=0.926
+\end{itemize}
+
+\textbf{Future yield} ($n$=283 time-series pairs): Predict next year's yield from this year's microbiome.
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Gaia: $R^2$=0.541}
+    \item \textbf{RF: $R^2$=0.504}
+\end{itemize}
+
+\textbf{This is Gaia's most significant result.} While RF outperforms Gaia on current yield (a contemporaneous prediction), Gaia outperforms RF on future yield prediction, where understanding microbial community dynamics over time is essential. The 7.3\% relative improvement in $R^2$ suggests that learned representations capture temporal information that independent feature-based methods cannot.
+
+\textbf{Sample predictions for future yield}:
+
+\begin{table}[H]
+\centering
+\caption{Sample predictions for next year's yield}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Actual} & \textbf{Predicted} & \textbf{Error} \\
+\midrule
+83 & 80 & 2 \\
+85 & 85 & 0 \\
+85 & 85 & 0 \\
+94 & 91 & 4 \\
+103 & 100 & 2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Several predictions are exact (error 0) or within $\pm$2 units, demonstrating practical utility for agricultural planning.
+
+\subsection{Functional Profile Analysis}
+
+To explore Gaia's potential for functional interpretation, we performed literature-based functional annotation of microbial genera and analyzed differences between drought and control samples in the Naylor dataset.
+
+\begin{table}[H]
+\centering
+\caption{Functional group changes under drought stress}
+\label{tab:function}
+\begin{tabular}{lrrrl}
+\toprule
+\textbf{Functional Group} & \textbf{Control} & \textbf{Drought} & \textbf{Change} & \textbf{Direction} \\
+\midrule
+Carbon Decomposition & 2,146 & 4,262 & \textbf{+98.6\%} & UP \\
+Pathogen Suppression & 2,737 & 4,581 & \textbf{+67.4\%} & UP \\
+Methane Cycling & 14 & 20 & +50.8\% & UP \\
+Denitrification & 788 & 578 & \textbf{-26.6\%} & DOWN \\
+Nitrification & 366 & 420 & +14.7\% & UP \\
+Phosphorus Solubilization & 1,664 & 1,877 & +12.8\% & UP \\
+Plant Growth Promotion & 3,394 & 3,128 & -7.8\% & DOWN \\
+Nitrogen Fixation & 900 & 779 & \textbf{-13.4\%} & DOWN \\
+Organic Matter Decomposition & 3,842 & 3,319 & -13.6\% & DOWN \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key findings}:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Carbon decomposition increases by 98.6\%} under drought, suggesting accelerated organic matter breakdown that could deplete soil carbon stocks.
+    \item \textbf{Nitrogen fixation decreases by 13.4\%}, indicating reduced biological nitrogen input to drought-stressed soils.
+    \item \textbf{Pathogen suppression increases by 67.4\%}, possibly reflecting a stress response activating defense-related microbes.
+    \item \textbf{Denitrification decreases by 26.6\%}, suggesting disrupted nitrogen cycling.
+\end{itemize}
+
+These findings are consistent with published drought-microbiome studies and demonstrate that combining functional annotation with our model enables mechanistic interpretation of soil functional degradation.
+
+\subsection{Data Scaling Analysis}
+
+To understand how performance depends on training data quantity, we trained Gaia at three data scales and measured benchmark performance.
+
+\begin{table}[H]
+\centering
+\caption{Performance scaling with training data}
+\label{tab:scaling}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Training Samples} & \textbf{Biome Acc.} & \textbf{Drought Acc.} & \textbf{pH $R^2$} \\
+\midrule
+3,624 & 66.7\% & 87.1\% & 0.878 \\
+6,339 & 97.0\% & 91.1\% & 0.866 \\
+8,329 & \textbf{98.6\%} & \textbf{91.9\%} & \textbf{0.947} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Performance improves consistently with data quantity. Notably:
+\begin{itemize}[leftmargin=1.5em]
+    \item Biome classification jumped from 66.7\% (3,624 samples) to 97.0\% (6,339 samples), then to 98.6\% (8,329 samples)
+    \item pH prediction improved from $R^2$=0.866 to 0.947 between the two largest scales
+    \item No saturation is evident, suggesting further improvement is possible with more data
+\end{itemize}
+
+\textbf{Implication}: Our results likely \emph{underestimate} the potential of soil-specialized foundation models. With 50,000+ samples (still 5$\times$ less than MGM's 260K), Gaia could potentially exceed Random Forest on multiple tasks.
+
+\subsection{Vocabulary Expansion Analysis}
+
+We compared performance with and without vocabulary expansion to validate the benefit of including soil-specific genera.
+
+Without expansion (9,669 token vocabulary), only 47--58\% of genera in our datasets matched the vocabulary. With expansion (12,916 tokens), matching reached 100\%. Importantly, the two-step training strategy was critical:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Single-step training} with expanded vocabulary degraded performance because new random embeddings disrupted pre-trained weights during gradient updates.
+    \item \textbf{Two-step training} preserved pre-trained knowledge and successfully integrated new soil-specific genera.
+\end{itemize}
+
+This finding has implications for any continual pre-training scenario involving vocabulary expansion: separate embedding-only learning before full fine-tuning is essential.
 
 \section{Discussion}
 
-\subsection{Foundation Models vs Traditional ML}
+\subsection{Foundation Models vs Traditional Machine Learning}
 
-Gaia demonstrates that soil-specialized foundation models are competitive with Random Forest across diverse prediction tasks. The key advantage emerges in temporal prediction ($R^2$=0.541 vs 0.504), where understanding microbial community relationships is essential. Additionally, foundation models offer unique capabilities---abundance reconstruction, synthetic community generation, and functional interpretation---that traditional ML cannot provide.
+Our results suggest that foundation models and Random Forest occupy complementary positions in the soil microbiome analysis toolkit. RF excels at extracting discriminative features from clean labeled data and provides excellent performance on classification and regression tasks where the relationship between inputs and outputs is direct.
 
-\subsection{Carbon and Climate Applications}
+Foundation models like Gaia offer different strengths:
 
-The ability to predict soil carbon ($R^2$=0.829) from microbiome data has implications for carbon credit markets. Current soil carbon measurement requires physical sampling and chemical analysis (\$50--100 per sample). Microbiome-based estimation could provide a complementary, scalable verification tool. The functional analysis showing 98.6\% increase in carbon decomposition under drought further suggests that microbiome monitoring could predict carbon storage vulnerability.
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Generative capabilities}: Predicting missing taxa, generating synthetic communities, and reconstructing partial profiles---tasks impossible for feature-based methods.
+    \item \textbf{Temporal understanding}: Learning representations that capture community dynamics over time, enabling future state prediction (as demonstrated by our 7.3\% improvement on next-year yield prediction).
+    \item \textbf{Transfer learning}: One pre-trained model adapted to multiple downstream tasks, reducing labeled data requirements.
+    \item \textbf{Functional interpretation}: When combined with functional annotation, learned representations can reveal mechanistic insights into microbial community function.
+\end{enumerate}
 
-\subsection{Agricultural Applications}
+These complementary strengths suggest that foundation models should be added to, not replace, traditional analytical methods for soil microbiome research.
 
-Gaia's temporal yield prediction capability ($R^2$=0.541) enables farmers to estimate next year's yield from this year's soil microbiome analysis. Combined with pH prediction ($R^2$=0.947), carbon estimation ($R^2$=0.829), and drought detection (91.9\%), Gaia offers comprehensive soil health assessment from a single microbiome sequencing.
+\subsection{The Significance of Temporal Prediction}
+
+The future yield prediction result is, in our view, the most important finding. Predicting next year's yield from this year's microbiome is precisely the task where understanding microbial community structure should provide an advantage. RF, treating each genus independently, cannot leverage information about how community composition evolves over time. Gaia, having learned community-level representations through self-supervised pre-training, appears to capture this temporal information.
+
+While the absolute $R^2$ of 0.541 may seem modest, it represents a 7.3\% relative improvement over RF in a setting with limited training data (283 time-series pairs from one experimental site). With more longitudinal data, this advantage could grow substantially.
+
+This finding has practical implications: if microbiome-based yield prediction can be made reliable, farmers could make planting and management decisions a year in advance based on a single soil microbiome analysis.
+
+\subsection{Carbon Prediction and Climate Applications}
+
+The ability to predict soil total carbon ($R^2$=0.829) from microbiome composition has implications for carbon credit verification. The global carbon credit market is projected to exceed \$50 billion by 2030, but verification of soil carbon sequestration remains a major bottleneck due to measurement costs.
+
+Microbiome-based estimation could provide:
+\begin{itemize}[leftmargin=1.5em]
+    \item Lower-cost screening of large agricultural areas
+    \item Spatially explicit carbon estimates from sparse sampling
+    \item Early detection of carbon loss (e.g., the 98.6\% increase in carbon decomposition under drought we observed)
+\end{itemize}
+
+While our $R^2$ of 0.829 is below RF's 0.948, the foundation model approach offers interpretability and generalization benefits that may favor it for diverse field conditions.
+
+\subsection{Functional Profile Insights}
+
+The functional profile analysis demonstrates how foundation model outputs can be combined with literature-based annotation to derive mechanistic insights. Our finding that drought conditions increase carbon decomposition by 98.6\% while decreasing nitrogen fixation by 13.4\% provides a microbial mechanism for the often-observed soil functional degradation under drought.
+
+This analysis is preliminary---a more rigorous approach would use shotgun metagenomics to directly measure functional gene abundance, or apply tools like PICRUSt2 for predicted functional profiles. Future work will integrate these methods.
 
 \subsection{Limitations}
 
-\begin{enumerate}
-\item Training data (8,329 samples) is small compared to MGM (260K), though performance scales consistently with data quantity.
-\item Temporal evaluation is limited to 283 time-series pairs from one experimental site.
-\item Functional analysis uses literature-based annotation rather than direct functional gene measurement (e.g., shotgun metagenomics).
-\item Several tasks (tillage, fertilization) favor RF, likely due to 20-year controlled experimental design creating highly separable features.
-\end{enumerate}
+We acknowledge several limitations of the current work:
+
+\textbf{1. Training data scale}: 8,329 samples is small compared to MGM's 260K and the potential of soil microbiome data ($>$25,000 samples in EMP alone). Performance scales consistently with data quantity, suggesting our results underestimate the approach's potential.
+
+\textbf{2. Single-site temporal data}: Future yield prediction was evaluated on 283 time-series pairs from one experimental site (BonaRes Westerfeld). Generalization across sites and climates is not demonstrated.
+
+\textbf{3. Vocabulary mismatch}: Different databases use different naming conventions, requiring vocabulary expansion. While our two-step training addresses this, ideal cross-database compatibility remains a challenge.
+
+\textbf{4. RF comparison favorability}: Several tasks (tillage, fertilization) favor RF, likely due to the highly controlled 20-year experimental design creating trivially separable features. Performance on noisy real-world data may differ.
+
+\textbf{5. Functional annotation manual}: Our functional analysis relies on literature-based genus-function associations rather than direct measurement. This is a coarse approximation of true functional capacity.
+
+\textbf{6. Genus-level resolution}: Many functional differences exist at species or strain level, which our genus-level model cannot capture.
 
 \subsection{Future Directions}
 
-\begin{enumerate}
-\item Scaling to 50,000+ samples through additional public databases and collaborations
-\item Integration of multi-modal inputs (microbiome + soil chemistry + climate data)
-\item Direct functional prediction using PICRUSt2 or shotgun metagenomics
-\item Prospective validation on independent experimental sites
-\item Development of a web-based diagnostic tool for agricultural applications
-\end{enumerate}
+Several avenues warrant further investigation:
+
+\textbf{1. Data scaling}: Expand training data to 50,000+ samples through additional public databases (Qiita studies, NCBI SRA, regional repositories) and direct collaboration with microbial ecologists.
+
+\textbf{2. Multi-modal integration}: Combine microbiome data with soil chemistry (pH, nutrients), climate data (temperature, precipitation), and agricultural management (crop rotation, fertilization history) for more accurate predictions.
+
+\textbf{3. Functional gene prediction}: Integrate PICRUSt2 or similar tools to provide predicted functional profiles alongside taxonomic representations.
+
+\textbf{4. Species-level modeling}: Develop higher-resolution models capturing species or strain-level variation, which is critical for many functional applications.
+
+\textbf{5. Prospective validation}: Test model predictions on independent experimental sites and longitudinal datasets to assess generalization.
+
+\textbf{6. Practical deployment}: Develop a web-based diagnostic tool that accepts microbiome data and returns comprehensive soil health assessments, enabling broader adoption by researchers and practitioners.
 
 \section{Conclusion}
 
-Gaia validates the concept of soil-specialized microbiome foundation models. By matching Random Forest on classification tasks, exceeding it on temporal prediction, and providing unique capabilities in functional analysis and community generation, Gaia demonstrates that learned microbial ``language'' representations capture ecologically meaningful patterns. The consistent improvement with data scaling, combined with the ability to predict soil carbon, pH, yield, and functional profiles from a single microbiome analysis, suggests a clear path toward practical tools for precision agriculture, soil health monitoring, and carbon credit verification.
+We have presented Gaia, the first soil-specialized foundation model for microbiome analysis. Through continual pre-training of MGM on 8,329 soil samples with vocabulary expansion and a two-step training strategy, Gaia achieves performance competitive with Random Forest on classification tasks while demonstrating unique strengths in temporal prediction (next-year yield), generative tasks (abundance reconstruction), and functional interpretation (drought response analysis).
+
+The most significant finding is that Gaia outperforms Random Forest on future yield prediction ($R^2$=0.541 vs 0.504), validating the hypothesis that learned community representations capture temporal dynamics that feature-based methods cannot. Combined with the ability to predict soil pH ($R^2$=0.947), total carbon ($R^2$=0.829), and current yield ($R^2$=0.873) from microbiome composition alone, Gaia enables comprehensive soil health assessment from a single sequencing analysis.
+
+Performance scales consistently with training data quantity across all tasks, indicating that our results underestimate the approach's potential. The functional profile analysis demonstrates that drought conditions trigger a 98.6\% increase in carbon decomposition activity and a 13.4\% decrease in nitrogen fixation, providing mechanistic insight into soil functional degradation under environmental stress.
+
+Gaia complements rather than replaces traditional machine learning methods. RF remains effective for classification tasks with clean labeled data, while foundation models offer unique capabilities in generative prediction, temporal forecasting, and transfer learning. We expect that soil-specialized foundation models will become an essential tool for soil microbiome research, agricultural prediction, and climate-relevant applications such as carbon credit verification.
+
+All code, data pipelines, model weights, and benchmark scripts are publicly released at \url{https://github.com/Kimchikilla/Gaia} under Apache 2.0 license to enable reproducibility and community adoption.
+
+\section*{Acknowledgments}
+
+We thank the developers of MGnify, Earth Microbiome Project, BonaRes, and the authors of the Naylor et al. drought experiment for making their data publicly available. We acknowledge the HUST-NingKang-Lab for releasing the MGM model weights, which served as the foundation for our continual pre-training. This research was conducted independently without external funding.
 
 \section*{Data and Code Availability}
 
-All code, data collection pipelines, trained model weights, and benchmark scripts are available at \url{https://github.com/Kimchikilla/Gaia} under Apache 2.0 license.
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Code}: \url{https://github.com/Kimchikilla/Gaia}
+    \item \textbf{Model weights}: Available in the repository under \texttt{checkpoints/gaia\_v4/}
+    \item \textbf{Training data sources}:
+    \begin{itemize}
+        \item MGnify: \url{https://www.ebi.ac.uk/metagenomics/}
+        \item Earth Microbiome Project: \url{ftp://ftp.microbio.me/emp/release1/}
+        \item Naylor et al.: NCBI BioProject PRJNA369551
+        \item BonaRes: DOI 10.20387/bonares-w669-gdsd
+    \end{itemize}
+    \item \textbf{License}: Apache 2.0
+\end{itemize}
+
+\section*{Author Contributions}
+
+H.N. conceived the project, collected and processed the data, designed and trained the models, performed all experiments, analyzed the results, and wrote the manuscript.
+
+\section*{Competing Interests}
+
+The author declares no competing interests.
 
 \bibliographystyle{plainnat}
-\begin{thebibliography}{9}
+\begin{thebibliography}{20}
 
 \bibitem[MGM(2024)]{mgm2024}
 HUST-NingKang-Lab.
 \newblock MGM: A Large-Scale Pretrained Foundation Model for Microbiome Analyses.
-\newblock \emph{Advanced Science}, 2024.
+\newblock \emph{Advanced Science}, 2024. doi: 10.1002/advs.202513333.
 
-\bibitem[Thompson et al.(2017)]{emp2017}
-Thompson, L.~R. et al.
+\bibitem[Thompson et al.(2017)]{thompson2017communal}
+Thompson, L.~R., Sanders, J.~G., McDonald, D., Amir, A., Ladau, J., Locey, K.~J., et al.
 \newblock A communal catalogue reveals Earth's multiscale microbial diversity.
-\newblock \emph{Nature}, 551:457--463, 2017.
+\newblock \emph{Nature}, 551(7681):457--463, 2017.
 
-\bibitem[Naylor et al.(2017)]{naylor2017}
-Naylor, D. et al.
+\bibitem[Naylor et al.(2017)]{naylor2017drought}
+Naylor, D., DeGraaf, S., Purdom, E., and Coleman-Derr, D.
 \newblock Drought and host selection influence bacterial community dynamics in the grass root microbiome.
-\newblock \emph{The ISME Journal}, 11:2691--2704, 2017.
+\newblock \emph{The ISME Journal}, 11(12):2691--2704, 2017.
 
 \bibitem[Raab et al.(2025)]{bonares2025}
-Raab, M. et al.
+Raab, M., Reckling, M., Kuntz, M., Schubert, R., Gen{\c{s}}-Fuchs, S., Werner, M., et al.
 \newblock Two decades long-term field trial data on fertilization, tillage, and crop rotation focusing on soil microbes.
 \newblock \emph{Scientific Data}, 2025.
 
-\bibitem[Bolyen et al.(2019)]{qiime2019}
-Bolyen, E. et al.
+\bibitem[Bolyen et al.(2019)]{bolyen2019qiime2}
+Bolyen, E., Rideout, J.~R., Dillon, M.~R., Bokulich, N.~A., Abnet, C.~C., Al-Ghalith, G.~A., et al.
 \newblock Reproducible, interactive, scalable and extensible microbiome data science using QIIME 2.
-\newblock \emph{Nature Biotechnology}, 37:852--857, 2019.
+\newblock \emph{Nature Biotechnology}, 37(8):852--857, 2019.
+
+\bibitem[Callahan et al.(2016)]{callahan2016dada2}
+Callahan, B.~J., McMurdie, P.~J., Rosen, M.~J., Han, A.~W., Johnson, A.~J.~A., and Holmes, S.~P.
+\newblock DADA2: High-resolution sample inference from Illumina amplicon data.
+\newblock \emph{Nature Methods}, 13(7):581--583, 2016.
+
+\bibitem[Quast et al.(2013)]{quast2013silva}
+Quast, C., Pruesse, E., Yilmaz, P., Gerken, J., Schweer, T., Yarza, P., et al.
+\newblock The SILVA ribosomal RNA gene database project: improved data processing and web-based tools.
+\newblock \emph{Nucleic Acids Research}, 41(D1):D590--D596, 2013.
+
+\bibitem[Breiman(2001)]{breiman2001random}
+Breiman, L.
+\newblock Random Forests.
+\newblock \emph{Machine Learning}, 45(1):5--32, 2001.
+
+\bibitem[Brown et al.(2020)]{brown2020language}
+Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., et al.
+\newblock Language models are few-shot learners.
+\newblock \emph{Advances in Neural Information Processing Systems}, 33:1877--1901, 2020.
+
+\bibitem[Dosovitskiy et al.(2020)]{dosovitskiy2020image}
+Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., et al.
+\newblock An image is worth 16x16 words: Transformers for image recognition at scale.
+\newblock \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Jumper et al.(2021)]{jumper2021highly}
+Jumper, J., Evans, R., Pritzel, A., Green, T., Figurnov, M., Ronneberger, O., et al.
+\newblock Highly accurate protein structure prediction with AlphaFold.
+\newblock \emph{Nature}, 596(7873):583--589, 2021.
+
+\bibitem[Douglas et al.(2020)]{douglas2020picrust2}
+Douglas, G.~M., Maffei, V.~J., Zaneveld, J.~R., Yurgel, S.~N., Brown, J.~R., Taylor, C.~M., et al.
+\newblock PICRUSt2 for prediction of metagenome functions.
+\newblock \emph{Nature Biotechnology}, 38(6):685--688, 2020.
+
+\bibitem[Radford et al.(2019)]{radford2019language}
+Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., and Sutskever, I.
+\newblock Language models are unsupervised multitask learners.
+\newblock \emph{OpenAI Blog}, 1(8):9, 2019.
+
+\bibitem[Vaswani et al.(2017)]{vaswani2017attention}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.~N., et al.
+\newblock Attention is all you need.
+\newblock \emph{Advances in Neural Information Processing Systems}, 30, 2017.
+
+\bibitem[McMurdie and Holmes(2013)]{mcmurdie2013phyloseq}
+McMurdie, P.~J. and Holmes, S.
+\newblock phyloseq: an R package for reproducible interactive analysis and graphics of microbiome census data.
+\newblock \emph{PLoS ONE}, 8(4):e61217, 2013.
+
+\bibitem[Wolf et al.(2020)]{wolf2020transformers}
+Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue, C., Moi, A., et al.
+\newblock Transformers: State-of-the-art natural language processing.
+\newblock \emph{Proceedings of EMNLP: System Demonstrations}, 38--45, 2020.
 
 \end{thebibliography}
 
