@@ -32,7 +32,7 @@
 \maketitle
 
 \begin{abstract}
-Soil microbiomes are complex ecological systems whose composition reflects and influences soil health, agricultural productivity, and global biogeochemical cycles. While recent foundation models such as MGM (Microbiome General Model) have demonstrated the value of self-supervised pre-training on microbial community sequences, no such model has been specialized for the unique characteristics of soil microbiomes. Here we present \textbf{Gaia}, a soil-specialized foundation model built through continual pre-training of MGM on 8,329 soil samples assembled from four public databases: MGnify (2,790), Earth Microbiome Project (4,628), Naylor et al. drought stress experiment (623), and BonaRes Westerfeld 20-year long-term field trial (288). We expand the microbial vocabulary from 9,669 to 12,916 genera through a two-step training strategy that preserves pre-trained knowledge while incorporating soil-specific taxa. Gaia is evaluated across ten benchmark tasks spanning biome classification, drought detection, abundance reconstruction, agricultural management classification, soil chemistry prediction, yield prediction (current and future), carbon estimation, and functional profile analysis. Gaia achieves near-parity with Random Forest on biome classification (98.6\% vs 98.7\%) and drought detection (91.9\% vs 92.0\%), while demonstrating superior performance on temporal yield prediction ($R^2$=0.541 vs 0.504), the only task where understanding microbial community dynamics over time is essential. Additionally, Gaia predicts soil pH ($R^2$=0.947), total carbon ($R^2$=0.829), and current yield ($R^2$=0.873) from microbiome composition alone. Functional profile analysis reveals that drought conditions increase carbon decomposition activity by 98.6\% while decreasing nitrogen fixation by 13.4\%, providing mechanistic insight into soil functional degradation. Performance scales consistently with training data quantity across all tasks, suggesting our results underestimate the approach's potential. The unique advantages of Gaia—abundance reconstruction, synthetic community generation, and temporal prediction—complement traditional machine learning by enabling tasks that simple feature-based methods cannot perform. All code, data pipelines, trained model weights, and benchmark scripts are publicly available at \url{https://github.com/Kimchikilla/Gaia} under Apache 2.0 license.
+Soil microbiomes are complex ecological systems whose composition reflects and influences soil health, agricultural productivity, and global biogeochemical cycles. While recent foundation models such as MGM (Microbiome General Model) have demonstrated the value of self-supervised pre-training on microbial community sequences, no such model has been specialized for the unique characteristics of soil microbiomes. Here we present \textbf{Gaia}, a soil-specialized foundation model built through continual pre-training of MGM on 8,329 soil samples assembled from four public databases: MGnify (2,790), Earth Microbiome Project (4,628), Naylor et al. drought stress experiment (623), and BonaRes Westerfeld 20-year long-term field trial (288). We expand the microbial vocabulary from 9,669 to 12,916 genera through a two-step training strategy that preserves pre-trained knowledge while incorporating soil-specific taxa. Gaia is evaluated across ten benchmark tasks spanning biome classification, drought detection, abundance reconstruction, agricultural management classification, soil chemistry prediction, yield prediction (current and future), carbon estimation, and functional profile analysis. Gaia achieves near-parity with Random Forest on biome classification (98.6\% vs 98.7\%) and drought detection (91.9\% vs 92.0\%), while demonstrating superior performance on temporal yield prediction ($R^2$=0.541 vs 0.504), the only task where understanding microbial community dynamics over time is essential. Additionally, Gaia predicts soil pH ($R^2$=0.947), total carbon ($R^2$=0.829), and current yield ($R^2$=0.873) from microbiome composition alone. Functional profile analysis reveals that drought conditions increase carbon decomposition activity by 98.6\% while decreasing nitrogen fixation by 13.4\%, providing mechanistic insight into soil functional degradation. To test out-of-distribution generalization, we evaluated Gaia on the Bernburg long-term trial (96 samples, never seen during pre-training): under linear probing Gaia outperforms Random Forest on 5 of 6 tasks (Total Carbon $R^2$=0.718 vs RF 0.357), and under true zero-shot cross-site transfer (head trained on Westerfeld, tested on Bernburg with no Bernburg training) Gaia outperforms Random Forest on all 3 regression tasks, including pH where Random Forest fails completely ($R^2$=$-$0.515) while Gaia achieves $R^2$=0.393. Performance scales consistently with training data quantity across all tasks, suggesting our results underestimate the approach's potential. The unique advantages of Gaia—abundance reconstruction, synthetic community generation, and temporal prediction—complement traditional machine learning by enabling tasks that simple feature-based methods cannot perform. All code, data pipelines, trained model weights, and benchmark scripts are publicly available at \url{https://github.com/Kimchikilla/Gaia} under Apache 2.0 license.
 \end{abstract}
 
 \textbf{Keywords:} soil microbiome, foundation model, transformer, GPT-2, transfer learning, precision agriculture, carbon sequestration, drought detection
@@ -142,6 +142,13 @@ A major challenge in building soil-specific models is data heterogeneity: differ
 Predicting soil organic carbon is critical for climate change mitigation and carbon credit verification. Current methods rely on direct chemical measurements (\$50--100 per sample) or spectroscopic methods (FTIR, NIR). Microbiome-based estimation has been proposed but remains underexplored due to the complexity of microbial-carbon relationships. We demonstrate that foundation model representations enable accurate carbon prediction ($R^2$=0.829) from microbiome data alone.
 
 \section{Methods}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig3_pipeline.png}
+\caption{Overview of the Gaia pipeline: data collection from four public sources, six-step preprocessing, two-step continual pre-training of MGM with vocabulary expansion (9,669 $\rightarrow$ 12,916 genera), and downstream evaluation across ten benchmark tasks.}
+\label{fig:pipeline}
+\end{figure}
 
 \subsection{Data Collection}
 
@@ -309,6 +316,13 @@ Functional Analysis & -- & \multicolumn{2}{c}{See Section 4.5} & -- \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig2_benchmark_comparison.png}
+\caption{Benchmark comparison between Gaia and Random Forest across all evaluation tasks. Gaia matches RF on classification tasks and outperforms it on temporal yield prediction.}
+\label{fig:benchmark}
+\end{figure}
+
 \subsection{Biome Classification}
 
 We evaluated biome classification using forest vs grassland samples from MGnify ($n$=569 after metadata cleaning). After 20 epochs of linear probing, Gaia achieved 98.6\% accuracy compared to 98.7\% for Random Forest---a difference of 0.1 percentage points that is within experimental noise.
@@ -432,6 +446,13 @@ Yield prediction is the most agriculturally relevant task. We tested two variant
 
 Several predictions are exact (error 0) or within $\pm$2 units, demonstrating practical utility for agricultural planning.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig4_future_yield.png}
+\caption{Future yield prediction: Gaia ($R^2$=0.541) outperforms Random Forest ($R^2$=0.504) when predicting next year's yield from this year's microbiome composition. This is the only task where Gaia exceeds RF, highlighting the value of learned temporal representations.}
+\label{fig:future}
+\end{figure}
+
 \subsection{Functional Profile Analysis}
 
 To explore Gaia's potential for functional interpretation, we performed literature-based functional annotation of microbial genera and analyzed differences between drought and control samples in the Naylor dataset.
@@ -495,6 +516,13 @@ Performance improves consistently with data quantity. Notably:
 
 \textbf{Implication}: Our results likely \emph{underestimate} the potential of soil-specialized foundation models. With 50,000+ samples (still 5$\times$ less than MGM's 260K), Gaia could potentially exceed Random Forest on multiple tasks.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig1_data_scaling.png}
+\caption{Performance scaling with training data quantity. All metrics improve consistently from 3,624 to 8,329 samples without saturation, indicating that additional soil samples will further enhance Gaia's capabilities.}
+\label{fig:scaling}
+\end{figure}
+
 \subsection{Vocabulary Expansion Analysis}
 
 We compared performance with and without vocabulary expansion to validate the benefit of including soil-specific genera.
@@ -507,6 +535,53 @@ Without expansion (9,669 token vocabulary), only 47--58\% of genera in our datas
 \end{itemize}
 
 This finding has implications for any continual pre-training scenario involving vocabulary expansion: separate embedding-only learning before full fine-tuning is essential.
+
+\subsection{Out-of-Distribution Generalization: Bernburg Long-Term Trial}
+
+To test whether Gaia's learned representations transfer to a soil site never seen during pre-training, we acquired the Bernburg long-term field trial dataset (96 samples, 763 genera, 3 years 2019--2021) from the same author as Westerfeld but located in a different geographic and management context. Bernburg samples were not included in any of the 8,329 training samples. We evaluated Gaia under two regimes.
+
+\textbf{Regime 1: Linear probe on Bernburg.} The Gaia v4 backbone was frozen and a task-specific head was trained on 80\% of Bernburg samples and tested on the held-out 20\%, identical to our other benchmarks. Random Forest used the same 80/20 split.
+
+\begin{table}[H]
+\centering
+\caption{Bernburg linear-probe results: backbone frozen, head trained on 80\% Bernburg, tested on 20\%. Gaia outperforms RF on 5 of 6 tasks.}
+\label{tab:bernburg_lp}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Task} & \textbf{Gaia} & \textbf{Random Forest} & \textbf{Winner} \\
+\midrule
+Tillage Classification & 84.2\% & 100.0\% & RF \\
+Fertilization Classification & \textbf{68.4\%} & 57.9\% & \textbf{Gaia} \\
+pH Prediction & \textbf{$R^2$=0.585} & 0.551 & \textbf{Gaia} \\
+\textbf{Total Carbon ($C$ \%)} & \textbf{$R^2$=0.718} & 0.357 & \textbf{Gaia} \\
+Total Nitrogen ($N$ \%) & \textbf{$R^2$=0.732} & 0.725 & \textbf{Gaia} \\
+Organic Matter ($OM$ \%) & \textbf{$R^2$=0.717} & 0.497 & \textbf{Gaia} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The most striking result is total carbon prediction: Gaia achieves $R^2$=0.718 versus Random Forest's $R^2$=0.357---approximately twice the explained variance. This pattern, where Gaia underperforms RF on the same site (Westerfeld carbon: 0.829 vs RF 0.948) but outperforms RF on a new site, suggests that the foundation model's learned representations are more robust to site-specific noise than feature-based methods.
+
+\textbf{Regime 2: True zero-shot cross-site transfer.} To test whether Gaia generalizes without any exposure to the target site, we trained the head exclusively on Westerfeld and evaluated directly on Bernburg---no Bernburg data was used during head training. Random Forest baseline followed the same protocol.
+
+\begin{table}[H]
+\centering
+\caption{Zero-shot cross-site transfer: head trained on Westerfeld only, evaluated on Bernburg. Gaia outperforms RF on all three regression tasks.}
+\label{tab:bernburg_zs}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Task} & \textbf{Gaia} & \textbf{Random Forest} \\
+\midrule
+Total Carbon ($C$ \%) & \textbf{$R^2$=0.291} & 0.199 \\
+pH & \textbf{$R^2$=0.393} & $-$0.515 \\
+Total Nitrogen ($N$ \%) & \textbf{$R^2$=0.520} & 0.307 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Gaia outperforms Random Forest on all three regression tasks under true zero-shot transfer. The pH result is particularly informative: Random Forest's negative $R^2$ ($-$0.515) indicates worse-than-mean prediction---the feature-based model fails completely when applied to a new site---while Gaia achieves a positive $R^2$ of 0.393. Although absolute $R^2$ values are necessarily lower than within-site benchmarks (the two sites differ in soil type, management history, and climate), the consistent advantage of Gaia over RF demonstrates that learned microbial community representations transfer across sites in a way that engineered features do not.
+
+\textbf{Implication:} This is the strongest evidence in our study that soil-specialized foundation models capture transferable ecological structure. Random Forest treats each genus as an independent feature with site-specific weights; when those weights are applied to a new site, they fail. Gaia's representations, learned through self-supervised next-token prediction across 8,329 heterogeneous samples, encode relationships between taxa that remain meaningful in unseen contexts.
 
 \section{Discussion}
 
