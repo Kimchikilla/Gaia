@@ -12,12 +12,12 @@ Gaia is a foundation model that understands the "language" of soil microbial com
 
 ## Key Features
 
-- **Pre-trained Foundation Model**: Transformer-based model pre-trained on 10,000+ soil microbiome samples from MGnify, NEON, and EMP
-- **Soil Health Diagnosis**: Predict soil chemical properties (pH, organic carbon, total nitrogen) from microbial profiles
-- **Biome Classification**: Identify soil biome types (agricultural, forest, grassland, desert, wetland)
-- **Drought Stress Detection**: Binary classification of drought stress from microbial signatures
-- **Interpretability Tools**: Attention-based keystone genera identification
-- **Synthetic Data Generation**: Generate realistic microbial abundance profiles for target soil conditions
+- **Pre-trained Foundation Model**: 8-layer GPT-style transformer pre-trained on **7,170 soil microbiome sequences** from MGnify and EMP (v2 corpus); v1 (~2k) corpus also available
+- **Soil Health Diagnosis**: Predict soil chemical properties (pH R²=0.95, total carbon R²=0.88, total nitrogen R²=0.88 on Westerfeld in-distribution; pH R²=0.59, C R²=0.72, N R²=0.73 OOD on Bernburg) from microbial profiles
+- **Cross-Site OOD Generalization**: Beats RandomForest on 5/6 linear-probe tasks and 3/3 zero-shot Westerfeld→Bernburg tasks
+- **Drought Stress Detection**: Binary classification benchmarked on Naylor (USA Sorghum) — see [docs/benchmark_naylor.json](docs/benchmark_naylor.json)
+- **Inverse Design (consortium recommendation)**: Given a target (pH, C, N), retrieve and aggregate microbial profiles from reference samples whose embeddings best match the target
+- **CLI Tool**: `gaia diagnose abundance.csv` produces JSON or Markdown soil-health reports; `gaia design --ph 6.5 --carbon 1.8 --nitrogen 0.18` recommends a consortium
 
 ## Quick Start
 
@@ -37,15 +37,28 @@ pip install -e ".[dev]"
 
 ### Basic Usage
 
+CLI:
+
+```bash
+# Soil health diagnosis (predicts pH, total C, total N + lists keystone genera)
+gaia diagnose path/to/abundance.csv --markdown report.md
+
+# Inverse design — recommend a microbial consortium for a target soil state
+gaia design --ph 6.5 --carbon 1.8 --nitrogen 0.18 --top-n 15
+```
+
+Python API (legacy, in-process):
+
 ```python
-from gaia.inference import GaiaPredictor
+from gaia.cli import diagnose_file
+from gaia.inference.inverse_design import DesignTarget, design_consortium
 
-# Load pre-trained model
-predictor = GaiaPredictor.from_pretrained("gaia-v0.1")
+reports = diagnose_file("path/to/abundance.csv")
+for r in reports:
+    print(r.to_text())
 
-# Predict soil properties from microbial profile
-result = predictor.diagnose("path/to/abundance_profile.csv")
-print(result.soil_health_report)
+rec = design_consortium(DesignTarget(ph=6.5, total_carbon=1.8, total_nitrogen=0.18))
+print(rec.to_text(top_n=15))
 ```
 
 ## Project Structure
@@ -76,31 +89,53 @@ gaia/
 
 ## Data Sources
 
-| Source | Description | Samples |
-|--------|------------|---------|
-| [MGnify](https://www.ebi.ac.uk/metagenomics/) | Taxonomic abundance tables from soil biomes | 5,000-15,000 |
-| [NEON](https://www.neonscience.org/) | Paired microbiome + environmental data | ~2,000 |
-| [Earth Microbiome Project](https://earthmicrobiome.org/) | Standardized global soil samples | ~5,000 |
-| [SMAG](https://genome.jgi.doe.gov/) | 40,039 soil MAGs from 3,304 metagenomes | Reference DB |
+Actual processed corpora used for pretraining and benchmarks:
+
+| Source | Description | Used in v2 corpus |
+|--------|------------|-----:|
+| [MGnify](https://www.ebi.ac.uk/metagenomics/) | Taxonomic abundance tables (genus level) | 2,887 |
+| [Earth Microbiome Project](https://earthmicrobiome.org/) | Soil samples filtered from EMP release1 | 4,628 |
+| **Pre-training total (v2)** | After tokenization filter (≥5 valid genera) | **7,170 sequences** |
+| [Westerfeld LTE](https://www.bonares.de/) | Paired microbiome + soil chemistry (Germany) | held out — fine-tune & benchmark |
+| [Bernburg LTE](https://github.com/raabmarie/Synthesis_Three_Years_Bernburg) | Paired microbiome + soil chemistry (Germany) | held out — OOD benchmark |
+| [Naylor 2017](https://github.com/raabmarie/Naylor) | Sorghum drought (USA, California) | held out — OOD drought benchmark |
+
+NEON paired-microbiome data is queued for ingestion (currently only chemistry & site metadata are downloaded).
 
 ## Benchmarks
 
-| Task | Metric | Description |
-|------|--------|-------------|
-| Biome Classification | ROC-AUC, F1 | Classify soil biome type from microbial profile |
-| Soil Chemistry Prediction | R², RMSE | Predict pH, organic C, total N |
-| Tillage Classification | Accuracy, Kappa | Classify tillage practice |
-| Drought Stress Detection | Accuracy, F1 | Detect drought stress (binary) |
-| Abundance Reconstruction | Cosine Similarity | Reconstruct masked microbial profiles |
+Concrete results (v4 backbone, frozen — linear probe MLP head):
+
+| Task | Dataset | Gaia | RF | Winner |
+|---|---|---|---|---|
+| pH prediction (in-dist.) | Westerfeld 192 | R² = **0.95** | — | — |
+| Total Carbon (in-dist.) | Westerfeld 192 | R² = **0.88** | — | — |
+| Total Nitrogen (in-dist.) | Westerfeld 192 | R² = **0.88** | — | — |
+| pH prediction (OOD) | Bernburg 96 | R² = **0.59** | 0.55 | Gaia |
+| Total Carbon (OOD) | Bernburg 96 | R² = **0.72** | 0.36 | Gaia (~2×) |
+| Total Nitrogen (OOD) | Bernburg 96 | R² = **0.73** | 0.73 | tie |
+| pH zero-shot (Westerfeld→Bernburg) | 96 | R² = **0.39** | −0.52 | Gaia |
+| Total Carbon zero-shot | 96 | R² = **0.29** | 0.20 | Gaia |
+| Total Nitrogen zero-shot | 96 | R² = **0.52** | 0.31 | Gaia |
+| Drought classification (cross-continent) | Naylor (USA Sorghum) 623 | acc **0.944** / AUC **0.970** | acc 0.920 / AUC 0.951 | Gaia |
+| Yield regression | USDA Potato 423 | R² 0.05 | **R² 0.26** | RF |
+
+Honest read: Gaia dominates soil-chemistry and OOD generalization (foundation
+model's strength = transferable representation). Yield prediction with current
+v2 corpus still loses to RF — yield depends heavily on weather and management
+not present in the microbiome signal alone, and v2 still under-covers
+yield-paired domains. v5 (post-EMP continual pretrain) is the next yield rerun
+target.
 
 ## Model Architecture
 
-- **Base**: Multi-layer Transformer Decoder
-- **Layers**: 6-12 (adjustable)
-- **Attention Heads**: 8-16
-- **Embedding Dim**: 256-512
-- **Vocabulary**: ~5,000 soil-associated genera
-- **Pre-training**: Continual pre-training from [MGM](https://github.com/HUST-NingKang-Lab/MGM) weights
+- **Base**: GPT-2 style Transformer Decoder (Hugging Face `GPT2LMHeadModel`)
+- **Layers**: 8
+- **Attention Heads**: 8
+- **Embedding Dim**: 256
+- **Context length**: 512 tokens
+- **Vocabulary**: 12,916 (BOS / EOS / PAD / MASK + ~12.9k `g__<Genus>` tokens)
+- **Pre-training**: Continual pre-training from [MGM](https://github.com/HUST-NingKang-Lab/MGM) weights → `gaia_v4` (current public). `gaia_v5` is a continual-pretrain on the v2 (EMP-expanded) corpus.
 
 ## Tech Stack
 

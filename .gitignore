@@ -25,6 +25,13 @@ env/
 *.parquet
 data/raw/
 data/processed/
+# v2 expanded abundance (78 MB) — distribute via Hugging Face Hub instead
+data/processed_real/gaia-abundance-v2.csv
+
+# LaTeX build artifacts
+docs/paper/*.aux
+docs/paper/*.out
+docs/paper/*.log
 
 # Model weights (large)
 *.pt

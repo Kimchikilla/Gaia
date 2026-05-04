@@ -1,0 +1,16 @@
+{
+  "dataset": "Naylor (USA Sorghum drought)",
+  "n_samples": 623,
+  "n_genera": 1001,
+  "split": "80/20 stratified",
+  "gaia": {
+    "acc": 0.944,
+    "f1": 0.946,
+    "auc": 0.97
+  },
+  "rf": {
+    "acc": 0.92,
+    "f1": 0.9218749999999999,
+    "auc": 0.9510758196721311
+  }
+}

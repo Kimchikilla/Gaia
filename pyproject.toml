@@ -58,10 +58,12 @@ tracking = [
 all = ["gaia-soil[dev,viz,tracking]"]
 
 [project.urls]
-Homepage = "https://github.com/your-org/gaia"
-Documentation = "https://gaia-soil.readthedocs.io"
-Repository = "https://github.com/your-org/gaia"
-Issues = "https://github.com/your-org/gaia/issues"
+Homepage = "https://github.com/Kimchikilla/ProjectGaia"
+Repository = "https://github.com/Kimchikilla/ProjectGaia"
+Issues = "https://github.com/Kimchikilla/ProjectGaia/issues"
+
+[project.scripts]
+gaia = "gaia.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["gaia*"]
