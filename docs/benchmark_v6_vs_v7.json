@@ -1,0 +1,60 @@
+{
+  "v6": {
+    "emp": {
+      "country_probe_acc": 0.9407594936708861,
+      "biome_random_acc": 0.935,
+      "loco_mean_acc": 0.5620325148102926,
+      "loco_per_country": {
+        "United States of America": 0.42098765432098767,
+        "Antarctica": 0.46153846153846156,
+        "Kenya": 0.8035714285714286
+      }
+    },
+    "diagnostic": {
+      "pH": {
+        "r2_mean": 0.9647236735087829,
+        "r2_std": 0.012419761928212205,
+        "n": 192
+      },
+      "Total_Carbon": {
+        "r2_mean": 0.9285074644696885,
+        "r2_std": 0.04217396393073046,
+        "n": 192
+      },
+      "Total_Nitrogen": {
+        "r2_mean": 0.906787100165775,
+        "r2_std": 0.04858936050181677,
+        "n": 192
+      }
+    }
+  },
+  "v7": {
+    "emp": {
+      "country_probe_acc": 0.8698734177215188,
+      "biome_random_acc": 0.8975,
+      "loco_mean_acc": 0.48750960973183194,
+      "loco_per_country": {
+        "United States of America": 0.47901234567901235,
+        "Antarctica": 0.2692307692307692,
+        "Kenya": 0.7142857142857143
+      }
+    },
+    "diagnostic": {
+      "pH": {
+        "r2_mean": 0.804775573970607,
+        "r2_std": 0.05715777777240375,
+        "n": 192
+      },
+      "Total_Carbon": {
+        "r2_mean": 0.8129766153423127,
+        "r2_std": 0.0497529088758851,
+        "n": 192
+      },
+      "Total_Nitrogen": {
+        "r2_mean": 0.7205815617942614,
+        "r2_std": 0.08790312100661624,
+        "n": 192
+      }
+    }
+  }
+}
