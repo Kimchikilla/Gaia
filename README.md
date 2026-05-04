@@ -131,6 +131,29 @@ that microbiome alone does not carry, and v2 under-covers yield-paired
 domains. The next yield rerun should use the v5 (post-EMP continual pretrain)
 checkpoint.
 
+## Known Limitations
+
+These are honest caveats from internal validation work (`scripts/validate_diagnostic_heads.py`, `scripts/leave_one_country_out.py`, `scripts/geo_embedding_analysis.py`).
+
+1. **Strong batch / country signal in embeddings.** A logistic-regression probe over `gaia_v6` embeddings recovers the country of an EMP soil sample at 5-fold CV accuracy **0.94** (16 countries, majority baseline 0.44). UMAP shows nearly perfect country clusters (`docs/geo_umap.png`). This very likely reflects laboratory / sequencing-platform fingerprints, not just real biological geography.
+
+2. **Leave-one-country-out (LOCO) confirms batch shortcut.** When the same biome classifier is asked to predict on a country that was held out from training:
+   - Random in-distribution split: acc **0.96**
+   - LOCO mean: acc **0.63**, balanced acc **0.49**
+   - On the largest held-out country (USA, n=834), the model performs at **0.54 acc, worse than the majority-class baseline (0.58)**.
+   - Conclusion: a meaningful share of in-distribution accuracy comes from the model recognising "this is a sample from country X" rather than from generalisable microbial signal.
+
+3. **Westerfeld diagnostic R² (0.95 / 0.88 / 0.88) cannot be tested for batch shortcut.** Westerfeld is a single site, so there is no cross-site holdout within that dataset. Bernburg (also Germany, same data provider/protocol) is the closest available OOD test, and the OOD R² there drops to 0.59 / 0.72 / 0.73 — consistent with both genuine generalisation and partial batch shortcut.
+
+4. **Geographic and biome coverage of the pretraining corpus is uneven.** v3 corpus = MGnify v1 (2,887) + EMP (4,628) + NEON (2,999). NEON is 24 sites, all in the USA. EMP covers 21 countries but is dominated by the USA (43%) and Europe. Korean, tropical (sub-Saharan Africa, Southeast Asia, Latin America), and arid soils are sparsely represented.
+
+5. **Country and biome are partially confounded in EMP.** Several countries (Japan, Australia, Mongolia, Tanzania) only have a single ENVO biome class in the dataset. This makes "country generalisation" and "biome generalisation" hard to separate without more data.
+
+What this means for Gaia in practice:
+- Strong on tasks where the inference-time soil sample comes from a population the model has seen (same lab, same continent, same biome distribution).
+- Substantially weaker on truly novel geographies — a Korean vineyard or a Brazilian Cerrado sample is currently expected to be partially out-of-distribution at the **batch-effect** level, not just the biological-signal level.
+- Mitigations to try next: (a) batch-correction normalisation (CLR / log-ratio) before tokenisation, (b) leave-one-country-out fine-tuning, (c) actually adding non-Western datasets (Korean RDA, Brazilian agricultural soil studies on MGnify).
+
 ## Model Architecture
 
 - **Base**: GPT-2 style Transformer Decoder (Hugging Face `GPT2LMHeadModel`)

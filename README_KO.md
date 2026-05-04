@@ -127,6 +127,29 @@ v4 백본(동결) + linear probe MLP 헤드 결과:
 밀림 — yield 는 기후·관리 영향이 크고 v2 가 yield-페어 도메인을 충분히 못 봤다.
 v5 (post-EMP) 체크포인트로 yield 재실행이 다음 단계.
 
+## 알려진 한계
+
+내부 검증 결과(`scripts/validate_diagnostic_heads.py`, `scripts/leave_one_country_out.py`, `scripts/geo_embedding_analysis.py`)에서 나온 솔직한 caveat:
+
+1. **임베딩에 batch / country 신호가 강함.** v6 임베딩 위에서 logistic regression 으로 EMP 샘플의 country 를 분류하면 5-fold CV 정확도 **0.94** (16개국, majority baseline 0.44). UMAP 시각화에서도 country 별로 거의 완벽하게 분리됨 (`docs/geo_umap.png`). 이 신호는 진짜 지리적 미생물 차이라기보단 lab/sequencing-platform fingerprint 일 가능성 높음.
+
+2. **Leave-one-country-out (LOCO) 가 batch shortcut 가설을 확인.** 같은 biome 분류 모델을 한 country 빼고 학습 후 그 country 에서 테스트:
+   - Random 80/20: acc **0.96**
+   - LOCO 평균: acc **0.63**, balanced acc 0.49
+   - 가장 큰 holdout (US, n=834) 에서 acc **0.54 — majority baseline (0.58) 보다 못함**.
+   - 결론: in-distribution 정확도의 상당 부분이 "이건 X 나라 샘플이다" 를 인식하는 데서 나옴, 진짜 일반화 가능한 미생물 신호가 아님.
+
+3. **Westerfeld 진단 R² (0.95/0.88/0.88) 자체는 batch shortcut 검증 불가.** Westerfeld 는 단일 사이트라 cross-site holdout 못 만듦. 가장 가까운 OOD 인 Bernburg (같은 독일, 같은 연구진) 에서 R² 가 0.59/0.72/0.73 로 떨어짐 — 진짜 일반화일 수도, 부분적 batch shortcut 일 수도 있음 (현재 데이터로는 분리 불가).
+
+4. **사전학습 코퍼스의 지리·biome 커버리지 불균형.** v3 코퍼스 = MGnify v1 (2,887) + EMP (4,628) + NEON (2,999). NEON 은 24개 사이트 전부 미국. EMP 는 21개국이지만 미국 43%, 유럽 우세. **한국, 열대(아프리카·동남아·라틴아메리카), 건조 토양은 샘플 거의 없음.**
+
+5. **EMP 에서 country 와 biome 이 confounded.** 일본, 호주, 몽골, 탄자니아 등은 EMP 안에서 ENVO biome 이 1개만 나옴. 즉 "country 일반화" 와 "biome 일반화" 를 데이터만으론 분리 못 함.
+
+**실용적 함의**:
+- 학습 분포에 가까운 토양(같은 lab, 같은 대륙, 비슷한 biome)에선 강함.
+- 진짜 새 지역(한국 포도밭, 브라질 Cerrado)에선 batch effect 단계에서 이미 OOD — 미생물 신호 OOD 보다 더 약할 가능성.
+- 다음 시도: (a) 토큰화 전 batch-correction 정규화 (CLR / log-ratio), (b) leave-one-country-out 파인튜닝, (c) 실제로 비-서구 데이터셋 추가 (한국 RDA, MGnify 의 브라질 농경지 study 등).
+
 ## 모델 아키텍처
 
 - **베이스**: GPT-2 스타일 Transformer Decoder (HuggingFace `GPT2LMHeadModel`)

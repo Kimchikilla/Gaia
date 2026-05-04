@@ -1,0 +1,89 @@
+{
+  "backbone": "gaia_v6",
+  "tasks": {
+    "pH": {
+      "label_col": "pH",
+      "n": 192,
+      "label_min": 5.92,
+      "label_max": 7.61,
+      "label_mean": 7.2260937499999995,
+      "label_std": 0.37396363955729367,
+      "random_split": {
+        "gaia_r2": 0.9744324195345346,
+        "rf_r2": 0.970358617023008,
+        "mean_baseline_r2": -0.010512970702499791,
+        "gaia_rmse": 0.051802606508911136,
+        "mean_baseline_rmse": 0.32566999149201,
+        "improvement_over_mean_rmse_pct": 84.09352784652187
+      },
+      "stratified_split": {
+        "gaia_r2": 0.9445068304897377,
+        "rf_r2": 0.9267005216968556,
+        "mean_baseline_r2": -0.005489559481026474,
+        "gaia_rmse": 0.10001897267659773,
+        "mean_baseline_rmse": 0.4257468143137385,
+        "improvement_over_mean_rmse_pct": 76.50740550159644
+      },
+      "cv5_gaia_r2_mean": 0.9595824518739287,
+      "cv5_gaia_r2_std": 0.01050366262521191,
+      "cv5_rf_r2_mean": 0.9135355803621238,
+      "cv5_mean_baseline_r2_mean": -0.012752782154253683
+    },
+    "Total_Carbon": {
+      "label_col": "Total_Carbon",
+      "n": 192,
+      "label_min": 1.52,
+      "label_max": 2.5093346,
+      "label_mean": 1.9769729078125,
+      "label_std": 0.2399338688596957,
+      "random_split": {
+        "gaia_r2": 0.9449268750337623,
+        "rf_r2": 0.9211223335434648,
+        "mean_baseline_r2": -0.0019278689846173869,
+        "gaia_rmse": 0.05417839614598439,
+        "mean_baseline_rmse": 0.23108646697532315,
+        "improvement_over_mean_rmse_pct": 76.55492471925243
+      },
+      "stratified_split": {
+        "gaia_r2": 0.9051839752855739,
+        "rf_r2": 0.7931776838182689,
+        "mean_baseline_r2": -0.00014301338289413046,
+        "gaia_rmse": 0.07257821239928926,
+        "mean_baseline_rmse": 0.23572000876254012,
+        "improvement_over_mean_rmse_pct": 69.20999079361007
+      },
+      "cv5_gaia_r2_mean": 0.9236618345655184,
+      "cv5_gaia_r2_std": 0.0482426799398605,
+      "cv5_rf_r2_mean": 0.8455376296131275,
+      "cv5_mean_baseline_r2_mean": -0.0050082237158760815
+    },
+    "Total_Nitrogen": {
+      "label_col": "Total_Nitrogen",
+      "n": 192,
+      "label_min": 0.118,
+      "label_max": 0.252,
+      "label_mean": 0.17338541666666665,
+      "label_std": 0.02970983626107223,
+      "random_split": {
+        "gaia_r2": 0.9439379226242892,
+        "rf_r2": 0.9425973030196847,
+        "mean_baseline_r2": -0.0046756932359892645,
+        "gaia_rmse": 0.007015875136850293,
+        "mean_baseline_rmse": 0.029700256878707275,
+        "improvement_over_mean_rmse_pct": 76.37772910348086
+      },
+      "stratified_split": {
+        "gaia_r2": 0.9067287849191815,
+        "rf_r2": 0.8831888502689227,
+        "mean_baseline_r2": -0.0011383480053686057,
+        "gaia_rmse": 0.00962069599702858,
+        "mean_baseline_rmse": 0.031519529274572695,
+        "improvement_over_mean_rmse_pct": 69.47703148349443
+      },
+      "cv5_gaia_r2_mean": 0.9306516670698557,
+      "cv5_gaia_r2_std": 0.033230910615429474,
+      "cv5_rf_r2_mean": 0.860027375195882,
+      "cv5_mean_baseline_r2_mean": -0.0011966526216035333
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "backbone": "gaia_v6",
+  "n_total": 2000,
+  "loco_per_country": {
+    "United States of America": {
+      "n_test": 834,
+      "n_biomes": 6,
+      "acc": 0.5419664268585132,
+      "bal_acc": 0.41171428565459073,
+      "macro_f1": 0.4046018584293361,
+      "majority_baseline_acc": 0.5839328537170264
+    },
+    "Antarctica": {
+      "n_test": 74,
+      "n_biomes": 2,
+      "acc": 0.5,
+      "bal_acc": 0.46801705756929635,
+      "macro_f1": 0.39357696566998895,
+      "majority_baseline_acc": 0.0945945945945946
+    },
+    "Kenya": {
+      "n_test": 62,
+      "n_biomes": 2,
+      "acc": 0.8548387096774194,
+      "bal_acc": 0.5909090909090909,
+      "macro_f1": 0.6133056133056133,
+      "majority_baseline_acc": 0.8225806451612904
+    }
+  },
+  "random_baseline": {
+    "acc": 0.9575,
+    "bal_acc": 0.9440887343948569,
+    "macro_f1": 0.9260724052704005
+  },
+  "loco_mean": {
+    "acc": 0.6322683788453108,
+    "bal_acc": 0.49021347804432597,
+    "macro_f1": 0.47049481246831276
+  }
+}
