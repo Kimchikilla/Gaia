@@ -1,8 +1,6 @@
 # Gaia: Soil Microbiome Foundation Model
 
-> *Gaia — the Greek goddess of Earth. Decoding the hidden language of soil microbiomes.*
-
-**"The AlphaFold of Soil Microbiomes, built open-source."**
+A transformer-based foundation model trained on public soil-microbiome data, with linear-probe heads for soil chemistry prediction and a CLI for diagnosis and consortium design.
 
 **English** | [한국어](README_KO.md)
 
@@ -10,9 +8,9 @@
 [![HF Dataset](https://img.shields.io/badge/HuggingFace_Dataset-Kimchikilla%2Fgaia--corpus-yellow)](https://huggingface.co/datasets/Kimchikilla/gaia-corpus)
 [![Dataset Downloads](https://img.shields.io/badge/dataset_downloads-2.7k%2F30d-brightgreen)](https://huggingface.co/datasets/Kimchikilla/gaia-corpus)
 
-Gaia is a foundation model that understands the "language" of soil microbial communities. Pre-trained on public metagenomic data, it enables soil health diagnosis, yield prediction, and microbial consortium design.
+Gaia is pre-trained on public metagenomic data (MGnify + EMP), and supports soil chemistry prediction, drought-stress classification, and consortium recommendation. See the benchmark table below for what it does and does not do.
 
-> Community pickup — `gaia-corpus` has been downloaded **~2,770 times in the last 30 days** on the Hugging Face Hub (snapshot: 2026-05-04). The dataset link is the [community-canonical entry point](https://huggingface.co/datasets/Kimchikilla/gaia-corpus); please cite both the dataset and this repo if you use Gaia in research.
+The `gaia-corpus` dataset has been downloaded ~2,770 times in the last 30 days on the Hugging Face Hub (snapshot: 2026-05-04).
 
 ---
 
@@ -20,7 +18,7 @@ Gaia is a foundation model that understands the "language" of soil microbial com
 
 - **Pre-trained Foundation Model**: 8-layer GPT-style transformer pre-trained on **7,170 soil microbiome sequences** from MGnify and EMP (v2 corpus); v1 (~2k) corpus also available
 - **Soil Health Diagnosis**: Predict soil chemical properties (pH R²=0.95, total carbon R²=0.88, total nitrogen R²=0.88 on Westerfeld in-distribution; pH R²=0.59, C R²=0.72, N R²=0.73 OOD on Bernburg) from microbial profiles
-- **Cross-Site OOD Generalization**: Beats RandomForest on 5/6 linear-probe tasks and 3/3 zero-shot Westerfeld→Bernburg tasks
+- **Cross-Site OOD**: Outperforms RandomForest on 5/6 linear-probe tasks and 3/3 zero-shot Westerfeld→Bernburg tasks; loses on yield regression
 - **Drought Stress Detection**: Binary classification benchmarked on Naylor (USA Sorghum) — see [docs/benchmark_naylor.json](docs/benchmark_naylor.json)
 - **Inverse Design (consortium recommendation)**: Given a target (pH, C, N), retrieve and aggregate microbial profiles from reference samples whose embeddings best match the target
 - **CLI Tool**: `gaia diagnose abundance.csv` produces JSON or Markdown soil-health reports; `gaia design --ph 6.5 --carbon 1.8 --nitrogen 0.18` recommends a consortium
@@ -126,12 +124,12 @@ Concrete results (v4 backbone, frozen — linear probe MLP head):
 | Drought classification (cross-continent) | Naylor (USA Sorghum) 623 | acc **0.944** / AUC **0.970** | acc 0.920 / AUC 0.951 | Gaia |
 | Yield regression | USDA Potato 423 | R² 0.05 | **R² 0.26** | RF |
 
-Honest read: Gaia dominates soil-chemistry and OOD generalization (foundation
-model's strength = transferable representation). Yield prediction with current
-v2 corpus still loses to RF — yield depends heavily on weather and management
-not present in the microbiome signal alone, and v2 still under-covers
-yield-paired domains. v5 (post-EMP continual pretrain) is the next yield rerun
-target.
+Read: Gaia wins on soil chemistry and OOD generalization (the transferable
+representation is doing useful work). It loses on yield regression with the
+current v2 corpus — yield depends heavily on weather and management signals
+that microbiome alone does not carry, and v2 under-covers yield-paired
+domains. The next yield rerun should use the v5 (post-EMP continual pretrain)
+checkpoint.
 
 ## Model Architecture
 
@@ -158,13 +156,7 @@ target.
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Ways to Contribute
-
-- **Code**: Bug fixes, new features, pipeline improvements
-- **Data**: Standardized soil microbiome datasets
-- **Science**: New benchmark tasks, ecological validation, domain expertise
+See [CONTRIBUTING.md](CONTRIBUTING.md). Useful directions: code fixes, additional standardized soil-microbiome datasets, new benchmark tasks, and ecological validation.
 
 ## Citation
 
@@ -180,6 +172,3 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
----
-
-*This project is under active development. Star this repo to stay updated!*
