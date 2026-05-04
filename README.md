@@ -6,7 +6,13 @@
 
 **English** | [한국어](README_KO.md)
 
+[![HF Model](https://img.shields.io/badge/HuggingFace-Kimchikilla%2Fgaia-yellow)](https://huggingface.co/Kimchikilla/gaia)
+[![HF Dataset](https://img.shields.io/badge/HuggingFace_Dataset-Kimchikilla%2Fgaia--corpus-yellow)](https://huggingface.co/datasets/Kimchikilla/gaia-corpus)
+[![Dataset Downloads](https://img.shields.io/badge/dataset_downloads-2.7k%2F30d-brightgreen)](https://huggingface.co/datasets/Kimchikilla/gaia-corpus)
+
 Gaia is a foundation model that understands the "language" of soil microbial communities. Pre-trained on public metagenomic data, it enables soil health diagnosis, yield prediction, and microbial consortium design.
+
+> Community pickup — `gaia-corpus` has been downloaded **~2,770 times in the last 30 days** on the Hugging Face Hub (snapshot: 2026-05-04). The dataset link is the [community-canonical entry point](https://huggingface.co/datasets/Kimchikilla/gaia-corpus); please cite both the dataset and this repo if you use Gaia in research.
 
 ---
 
