@@ -166,12 +166,6 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - **Data**: Standardized soil microbiome datasets
 - **Science**: New benchmark tasks, ecological validation, domain expertise
 
-## Community
-
-- **GitHub Discussions**: Technical discussions and Q&A
-- **Discord**: Real-time community chat
-- **Monthly Meetings**: Online direction-setting meetings (1st Thursday of each month)
-
 ## Citation
 
 ```bibtex
