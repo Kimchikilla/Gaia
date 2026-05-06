@@ -8,7 +8,7 @@ A transformer-based foundation model trained on public soil-microbiome data, wit
 [![HF Dataset](https://img.shields.io/badge/HuggingFace_Dataset-Kimchikilla%2Fgaia--corpus-yellow)](https://huggingface.co/datasets/Kimchikilla/gaia-corpus)
 [![Dataset Downloads](https://img.shields.io/badge/dataset_downloads-2.7k%2F30d-brightgreen)](https://huggingface.co/datasets/Kimchikilla/gaia-corpus)
 
-Gaia is pre-trained on public metagenomic data (MGnify + EMP), and supports soil chemistry prediction, drought-stress classification, and consortium recommendation. See the benchmark table below for what it does and does not do.
+Gaia is pre-trained on public metagenomic data (MGnify + EMP), and supports soil chemistry prediction, drought-stress classification, and consortium recommendation. See the benchmark table below for what it does and does not do — and **[ROADMAP.md](ROADMAP.md)** for the honest direction the project moved to after 2026-05-06.
 
 The `gaia-corpus` dataset has been downloaded ~2,770 times in the last 30 days on the Hugging Face Hub (snapshot: 2026-05-04).
 

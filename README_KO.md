@@ -1,6 +1,6 @@
 # Gaia: 토양 미생물 파운데이션 모델
 
-공개 토양 미생물 데이터(MGnify + EMP)로 사전학습한 트랜스포머 모델. 토양 화학 예측, 가뭄 분류, 컨소시엄 추천을 위한 linear probe 헤드와 CLI 제공.
+공개 토양 미생물 데이터(MGnify + EMP)로 사전학습한 트랜스포머 모델. 토양 화학 예측, 가뭄 분류, 컨소시엄 추천을 위한 linear probe 헤드와 CLI 제공. 2026-05-06 이후의 정직한 방향은 **[ROADMAP.md](ROADMAP.md)** 참고.
 
 [English](README.md) | **한국어**
 
