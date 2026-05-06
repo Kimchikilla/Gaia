@@ -108,28 +108,43 @@ NEON paired-microbiome data is queued for ingestion (currently only chemistry & 
 
 ## Benchmarks
 
-Concrete results (v4 backbone, frozen — linear probe MLP head):
+> **READ THIS FIRST.** The headline R² figures from earlier (v6 / v7) are *partly* the model recognising lab/country fingerprints, not real microbial signal. We trained an adversarial debiased model (v9) to quantify this. **The honest, batch-effect-free numbers are the v9 column. Treat that as the model's true diagnostic capability on a brand-new lab.**
 
-| Task | Dataset | Gaia | RF | Winner |
+Concrete results, grouped by backbone — frozen + linear-probe MLP head, 5-fold CV:
+
+| Westerfeld (in-dist.) | v6 (GPT2, raw counts) | v7 (GPT2, CLR) | v8 (BERT, CLR) | **v9 (BERT + adversarial)** |
 |---|---|---|---|---|
-| pH prediction (in-dist.) | Westerfeld 192 | R² = **0.95** | — | — |
-| Total Carbon (in-dist.) | Westerfeld 192 | R² = **0.88** | — | — |
-| Total Nitrogen (in-dist.) | Westerfeld 192 | R² = **0.88** | — | — |
-| pH prediction (OOD) | Bernburg 96 | R² = **0.59** | 0.55 | Gaia |
-| Total Carbon (OOD) | Bernburg 96 | R² = **0.72** | 0.36 | Gaia (~2×) |
-| Total Nitrogen (OOD) | Bernburg 96 | R² = **0.73** | 0.73 | tie |
-| pH zero-shot (Westerfeld→Bernburg) | 96 | R² = **0.39** | −0.52 | Gaia |
-| Total Carbon zero-shot | 96 | R² = **0.29** | 0.20 | Gaia |
-| Total Nitrogen zero-shot | 96 | R² = **0.52** | 0.31 | Gaia |
-| Drought classification (cross-continent) | Naylor (USA Sorghum) 623 | acc **0.944** / AUC **0.970** | acc 0.920 / AUC 0.951 | Gaia |
-| Yield regression | USDA Potato 423 | R² 0.05 | **R² 0.26** | RF |
+| pH R² | 0.962 | 0.761 | 0.070 | **0.108** |
+| Total Carbon R² | 0.932 | 0.781 | −0.008 | **−0.017** |
+| Total Nitrogen R² | 0.905 | 0.683 | 0.097 | **0.084** |
 
-Read: Gaia wins on soil chemistry and OOD generalization (the transferable
-representation is doing useful work). It loses on yield regression with the
-current v2 corpus — yield depends heavily on weather and management signals
-that microbiome alone does not carry, and v2 under-covers yield-paired
-domains. The next yield rerun should use the v5 (post-EMP continual pretrain)
-checkpoint.
+| EMP probes | v6 | v7 | v8 | **v9** |
+|---|---|---|---|---|
+| country probe acc (lower = less batch shortcut) | 0.941 | 0.870 | 0.427 | **0.188** |
+| biome random-split acc | 0.935 | 0.897 | 0.632 | **0.305** |
+| LOCO mean (cross-country biome acc) | 0.562 | 0.488 | 0.305 | **0.263** |
+
+Other tasks (still on v6/v7 — pending re-run on v9):
+
+| Task | Dataset | v6 score | RF |
+|---|---|---|---|
+| Drought classification (cross-continent) | Naylor (USA Sorghum) 623 | acc 0.944 / AUC 0.970 | acc 0.920 / AUC 0.951 |
+| Yield regression | USDA Potato 423 | R² 0.05 | R² 0.26 |
+| pH OOD | Westerfeld → Bernburg 96 | R² 0.39 | R² −0.52 |
+| Total Carbon OOD | Westerfeld → Bernburg 96 | R² 0.29 | R² 0.20 |
+| Total Nitrogen OOD | Westerfeld → Bernburg 96 | R² 0.52 | R² 0.31 |
+
+What v9 tells us:
+
+- The v9 model has a country probe accuracy of **0.19** vs **0.94** for v6 — adversarial training plus CLR + BERT removed nearly all the lab/country fingerprint from the embeddings.
+- The price of removing that shortcut is severe: Westerfeld pH R² drops from **0.962 → 0.108**, Total Carbon goes to **near zero**, Total Nitrogen to **0.08**.
+- This means the v6 R² ≈ 0.95 numbers were carrying a large amount of "I recognise this is a Westerfeld / German agricultural sample → predict the typical Westerfeld pH." When the model is no longer allowed to use that shortcut, the genuine microbiome → soil-chemistry signal it has learned is small.
+- The Naylor cross-continent drought result and the Westerfeld→Bernburg OOD numbers were generated on v6 and very likely contain some of the same shortcut. They need to be re-run on v9 to be trusted as out-of-distribution claims.
+
+What this implies for the README's mission:
+- The model **does** carry genuine signal — country probe is far above majority baseline (~0.06 for 16 classes), and v9 R² is positive for pH and N — but the magnitude of that genuine signal is much smaller than v6's headline numbers suggested.
+- Predictions on a soil sample from a lab the model has not seen (e.g. a Korean vineyard, a Brazilian Cerrado plot) should currently be expected to behave more like the v9 column than the v6 column.
+- Closing this gap requires more lab diversity in the corpus, abundance-aware tokenisation (current vocab is presence-only), and probably a larger model trained for longer than 1500 steps.
 
 ## Known Limitations
 
