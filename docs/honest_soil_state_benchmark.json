@@ -1,0 +1,289 @@
+{
+  "criteria": {
+    "diagnostic_gate": {
+      "passed": false,
+      "checks": {
+        "sample_count": true,
+        "group_count": true,
+        "group_r2": true,
+        "beats_mean_baseline": true,
+        "shortcut_probe": false
+      },
+      "criteria": {
+        "min_samples": 300,
+        "min_groups": 5,
+        "min_group_r2": 0.1,
+        "min_rmse_improvement_over_mean": 0.0,
+        "max_shortcut_accuracy_over_majority": 0.25
+      }
+    },
+    "prescription_gate": {
+      "passed": false,
+      "checks": {
+        "intervention_records": false,
+        "intervention_types": false,
+        "sites": false,
+        "followup_months": false,
+        "control_plots": false
+      },
+      "criteria": {
+        "min_intervention_records": 1000,
+        "min_intervention_types": 5,
+        "min_sites": 10,
+        "min_followup_months": 3,
+        "requires_control_plots": true
+      }
+    }
+  },
+  "diagnostic_report_for_gate": {
+    "n_samples": 2482,
+    "n_groups": 20,
+    "group_r2_mean": 0.2951020203929797,
+    "rmse_improvement_over_mean": 0.6784403449895758,
+    "shortcut_accuracy_over_majority": 0.6361867098158565
+  },
+  "neon_leave_one_site_out": [
+    {
+      "model": "Ridge_CLR",
+      "target": "ph",
+      "split": "GroupKFold(group_id)",
+      "n_samples": 2482,
+      "n_groups": 20,
+      "n_features": 315,
+      "r2_oof": 0.5160954929024528,
+      "rmse_oof": 0.9592039933677585,
+      "mae_oof": 0.715027714768618,
+      "folds": [
+        {
+          "fold": 1,
+          "n_train": 1982,
+          "n_test": 500,
+          "held_out_groups": [
+            "ABBY",
+            "DEJU",
+            "HARV",
+            "NIWO"
+          ],
+          "r2": -0.4845443607760167,
+          "rmse": 0.5298031415081834,
+          "mae": 0.3894355412366179,
+          "mean_baseline_r2": -8.1435676415517,
+          "mean_baseline_rmse": 1.3148486971167197,
+          "rmse_improvement_over_mean": 0.7850455556085363
+        },
+        {
+          "fold": 2,
+          "n_train": 1980,
+          "n_test": 502,
+          "held_out_groups": [
+            "CPER",
+            "JERC",
+            "KONA",
+            "MOAB"
+          ],
+          "r2": 0.20426106975685343,
+          "rmse": 0.7963648699828187,
+          "mae": 0.5908593895235773,
+          "mean_baseline_r2": -2.0439363491515508,
+          "mean_baseline_rmse": 1.5575592426636073,
+          "rmse_improvement_over_mean": 0.7611943726807886
+        },
+        {
+          "fold": 3,
+          "n_train": 1987,
+          "n_test": 495,
+          "held_out_groups": [
+            "BART",
+            "DCFS",
+            "HEAL",
+            "KONZ"
+          ],
+          "r2": 0.30559504318525876,
+          "rmse": 1.3148127620693355,
+          "mae": 1.0887399084088898,
+          "mean_baseline_r2": -0.007512847656798272,
+          "mean_baseline_rmse": 1.5837360451054026,
+          "rmse_improvement_over_mean": 0.26892328303606705
+        },
+        {
+          "fold": 4,
+          "n_train": 1996,
+          "n_test": 486,
+          "held_out_groups": [
+            "CLBJ",
+            "DELA",
+            "DSNY",
+            "MLBS"
+          ],
+          "r2": -0.47545272706214914,
+          "rmse": 1.1672431691339036,
+          "mae": 0.9114181778466106,
+          "mean_baseline_r2": -0.36908748237183886,
+          "mean_baseline_rmse": 1.1243830530330956,
+          "rmse_improvement_over_mean": -0.04286011610080798
+        },
+        {
+          "fold": 5,
+          "n_train": 1983,
+          "n_test": 499,
+          "held_out_groups": [
+            "BONA",
+            "GRSM",
+            "JORN",
+            "LENO"
+          ],
+          "r2": 0.7756955397396512,
+          "rmse": 0.7844050083942777,
+          "mae": 0.6041966228471176,
+          "mean_baseline_r2": -0.057471765464898183,
+          "mean_baseline_rmse": 1.703161351520186,
+          "rmse_improvement_over_mean": 0.9187563431259083
+        }
+      ],
+      "group_r2_mean": 0.06511091296871951,
+      "rmse_improvement_over_mean": 0.5382118876700984
+    },
+    {
+      "model": "RandomForest_CLR",
+      "target": "ph",
+      "split": "GroupKFold(group_id)",
+      "n_samples": 2482,
+      "n_groups": 20,
+      "n_features": 315,
+      "r2_oof": 0.6590021543373956,
+      "rmse_oof": 0.8052059254991322,
+      "mae_oof": 0.6120147564782242,
+      "folds": [
+        {
+          "fold": 1,
+          "n_train": 1982,
+          "n_test": 500,
+          "held_out_groups": [
+            "ABBY",
+            "DEJU",
+            "HARV",
+            "NIWO"
+          ],
+          "r2": -0.1822182381353621,
+          "rmse": 0.47278835031375366,
+          "mae": 0.3113359748979996,
+          "mean_baseline_r2": -8.1435676415517,
+          "mean_baseline_rmse": 1.3148486971167197,
+          "rmse_improvement_over_mean": 0.842060346802966
+        },
+        {
+          "fold": 2,
+          "n_train": 1980,
+          "n_test": 502,
+          "held_out_groups": [
+            "CPER",
+            "JERC",
+            "KONA",
+            "MOAB"
+          ],
+          "r2": 0.22322514349358868,
+          "rmse": 0.7868181520035439,
+          "mae": 0.5807986221066099,
+          "mean_baseline_r2": -2.0439363491515508,
+          "mean_baseline_rmse": 1.5575592426636073,
+          "rmse_improvement_over_mean": 0.7707410906600635
+        },
+        {
+          "fold": 3,
+          "n_train": 1987,
+          "n_test": 495,
+          "held_out_groups": [
+            "BART",
+            "DCFS",
+            "HEAL",
+            "KONZ"
+          ],
+          "r2": 0.5494384971415536,
+          "rmse": 1.0590940924617702,
+          "mae": 0.9154787096398139,
+          "mean_baseline_r2": -0.007512847656798272,
+          "mean_baseline_rmse": 1.5837360451054026,
+          "rmse_improvement_over_mean": 0.5246419526436323
+        },
+        {
+          "fold": 4,
+          "n_train": 1996,
+          "n_test": 486,
+          "held_out_groups": [
+            "CLBJ",
+            "DELA",
+            "DSNY",
+            "MLBS"
+          ],
+          "r2": 0.02754310369783053,
+          "rmse": 0.9476192438455904,
+          "mae": 0.7969942145850978,
+          "mean_baseline_r2": -0.36908748237183886,
+          "mean_baseline_rmse": 1.1243830530330956,
+          "rmse_improvement_over_mean": 0.17676380918750523
+        },
+        {
+          "fold": 5,
+          "n_train": 1983,
+          "n_test": 499,
+          "held_out_groups": [
+            "BONA",
+            "GRSM",
+            "JORN",
+            "LENO"
+          ],
+          "r2": 0.8575215957672878,
+          "rmse": 0.625166825866474,
+          "mae": 0.4635081768985353,
+          "mean_baseline_r2": -0.057471765464898183,
+          "mean_baseline_rmse": 1.703161351520186,
+          "rmse_improvement_over_mean": 1.077994525653712
+        }
+      ],
+      "group_r2_mean": 0.2951020203929797,
+      "rmse_improvement_over_mean": 0.6784403449895758
+    }
+  ],
+  "westerfeld_to_bernburg": [
+    {
+      "model": "Ridge_CLR",
+      "target": "ph",
+      "split": "Westerfeld -> Bernburg",
+      "n_train": 192,
+      "n_test": 94,
+      "n_features": 1261,
+      "r2": -7.4912515916005304,
+      "rmse": 0.2964070883720764,
+      "mae": 0.2795059792063948,
+      "mean_baseline_r2": -3.6060852368427465,
+      "mean_baseline_rmse": 0.2183075300397159,
+      "rmse_improvement_over_mean": -0.07809955833236051
+    },
+    {
+      "model": "RandomForest_CLR",
+      "target": "ph",
+      "split": "Westerfeld -> Bernburg",
+      "n_train": 192,
+      "n_test": 94,
+      "n_features": 1261,
+      "r2": -1.7329132580554845,
+      "rmse": 0.1681572725120079,
+      "mae": 0.14808032224473466,
+      "mean_baseline_r2": -3.6060852368427465,
+      "mean_baseline_rmse": 0.2183075300397159,
+      "rmse_improvement_over_mean": 0.05015025752770799
+    }
+  ],
+  "shortcut_probe_neon_site": {
+    "n_samples": 2482,
+    "n_classes": 20,
+    "n_splits": 3,
+    "accuracy_mean": 0.7300624845443728,
+    "accuracy_std": 0.024198909163025844,
+    "balanced_accuracy_mean": 0.7023732138478209,
+    "macro_f1_mean": 0.7092758445307373,
+    "majority_baseline_accuracy_mean": 0.09387577472851644,
+    "accuracy_over_majority": 0.6361867098158565
+  },
+  "interpretation": "This is a cleaned taxonomy-only diagnostic benchmark. Passing prescription is impossible without intervention/outcome data."
+}

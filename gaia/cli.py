@@ -17,73 +17,17 @@ import argparse
 import json
 import pickle
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from transformers import GPT2LMHeadModel
 
+from gaia.reporting import Prediction, SampleReport, checkpoint_reliability_notes
+
 
 DEFAULT_CKPT = Path(__file__).resolve().parent.parent / "checkpoints" / "gaia_v4"
-
-
-@dataclass
-class Prediction:
-    label: str
-    value: float
-    unit: str
-    confidence_r2: float
-
-
-@dataclass
-class SampleReport:
-    sample_id: str
-    n_genera: int
-    predictions: list[Prediction]
-    keystone_genera: list[tuple[str, float]]
-    health_score: float | None = None
-    notes: list[str] = None
-
-    def to_text(self) -> str:
-        lines = [f"=== Sample: {self.sample_id} ==="]
-        lines.append(f"Genera detected: {self.n_genera}")
-        lines.append("")
-        lines.append("Predicted soil chemistry:")
-        for p in self.predictions:
-            lines.append(f"  {p.label:>14}: {p.value:7.3f} {p.unit:6} (training R^2={p.confidence_r2:.2f})")
-        lines.append("")
-        lines.append("Top keystone genera (by abundance):")
-        for genus, weight in self.keystone_genera[:5]:
-            lines.append(f"  - {genus:30s} {weight:.4f}")
-        if self.notes:
-            lines.append("")
-            lines.append("Notes:")
-            for n in self.notes:
-                lines.append(f"  - {n}")
-        return "\n".join(lines)
-
-    def to_markdown(self) -> str:
-        out = [f"## Sample `{self.sample_id}`", ""]
-        out.append(f"- Genera detected: **{self.n_genera}**")
-        if self.health_score is not None:
-            out.append(f"- Health score: **{self.health_score:.2f}** / 1.00")
-        out.append("")
-        out.append("### Predicted soil chemistry")
-        out.append("| Property | Value | Unit | Training R² |")
-        out.append("|---|---|---|---|")
-        for p in self.predictions:
-            out.append(f"| {p.label} | {p.value:.3f} | {p.unit} | {p.confidence_r2:.2f} |")
-        out.append("")
-        out.append("### Top keystone genera (by abundance)")
-        for genus, weight in self.keystone_genera[:5]:
-            out.append(f"- *{genus}* — {weight:.4f}")
-        if self.notes:
-            out.append("")
-            out.append("### Notes")
-            for n in self.notes:
-                out.append(f"- {n}")
-        return "\n".join(out)
 
 
 class DiagnosisHead(nn.Module):
@@ -166,6 +110,7 @@ def diagnose_file(abundance_path, ckpt_dir=DEFAULT_CKPT, device=None):
 
     heads = load_heads(ckpt_dir / "heads", device)
     print(f"[gaia] loaded {len(heads)} prediction head(s): {list(heads)}", file=sys.stderr)
+    reliability_notes = checkpoint_reliability_notes(ckpt_dir, heads)
 
     df = pd.read_csv(abundance_path)
     if "sample_id" not in df.columns:
@@ -181,7 +126,7 @@ def diagnose_file(abundance_path, ckpt_dir=DEFAULT_CKPT, device=None):
         emb = get_embedding(gpt, x, device)
 
         preds = []
-        notes = []
+        notes = list(reliability_notes)
         if not matched:
             notes.append("0 genera matched the model vocabulary — predictions skipped.")
         else:

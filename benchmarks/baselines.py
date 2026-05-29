@@ -6,6 +6,7 @@ These serve as comparison points for the foundation model.
 """
 
 import logging
+from collections import Counter
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -61,6 +62,14 @@ def run_classification_baselines(
         )
 
     results = {}
+
+    majority_label = Counter(y_train).most_common(1)[0][0]
+    results["MajorityBaseline"] = {
+        "y_pred": np.full(y_test.shape, majority_label, dtype=y_test.dtype),
+        "y_proba": None,
+        "model": None,
+    }
+
     for name, model in models.items():
         logger.info(f"Training baseline: {name}")
 
@@ -112,6 +121,16 @@ def run_regression_baselines(
         )
 
     results = {}
+
+    results["MeanBaseline"] = {
+        "y_pred": np.full_like(
+            y_test,
+            fill_value=float(np.mean(y_train)),
+            dtype=float,
+        ),
+        "model": None,
+    }
+
     for name, model in models.items():
         logger.info(f"Training baseline: {name}")
 

@@ -1,0 +1,65 @@
+{
+  "datasets": {
+    "NEON": {
+      "path": "data\\processed_real\\soil_state_neon_ph.csv",
+      "n_samples": 2482,
+      "n_groups": 20,
+      "target": "ph",
+      "target_source": "site-level mean pH joined by site",
+      "cleaning": {
+        "n_rows": 2482,
+        "n_original_features": 1088,
+        "n_numeric_features": 1088,
+        "n_valid_taxa": 986,
+        "n_prevalence_features": 315,
+        "min_prevalence": 0.02,
+        "dropped_invalid_taxa": 102,
+        "dropped_low_prevalence": 671
+      }
+    },
+    "Westerfeld": {
+      "path": "data\\processed_real\\soil_state_westerfeld.csv",
+      "n_samples": 192,
+      "n_groups": 3,
+      "targets": [
+        "ph",
+        "total_carbon",
+        "total_nitrogen"
+      ],
+      "target_source": "paired long-term field-trial soil lab data",
+      "cleaning": {
+        "n_rows": 192,
+        "n_original_features": 1864,
+        "n_numeric_features": 1864,
+        "n_valid_taxa": 1813,
+        "n_prevalence_features": 1107,
+        "min_prevalence": 0.02,
+        "dropped_invalid_taxa": 51,
+        "dropped_low_prevalence": 706
+      }
+    },
+    "Bernburg": {
+      "path": "data\\processed_real\\soil_state_bernburg.csv",
+      "n_samples": 94,
+      "n_groups": 3,
+      "targets": [
+        "ph",
+        "total_carbon",
+        "total_nitrogen",
+        "organic_matter"
+      ],
+      "target_source": "paired long-term field-trial soil lab data",
+      "cleaning": {
+        "n_rows": 94,
+        "n_original_features": 780,
+        "n_numeric_features": 780,
+        "n_valid_taxa": 744,
+        "n_prevalence_features": 607,
+        "min_prevalence": 0.02,
+        "dropped_invalid_taxa": 36,
+        "dropped_low_prevalence": 137
+      }
+    }
+  },
+  "acceptance_note": "NEON pH is site-level and useful for cross-site stress testing, not calibrated per-sample chemistry. Westerfeld/Bernburg are true paired chemistry datasets but remain small and European."
+}
