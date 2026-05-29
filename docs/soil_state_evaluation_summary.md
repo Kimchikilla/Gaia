@@ -1,97 +1,101 @@
-# Soil-State Microbiome Evaluation Summary
+# 토양 상태 미생물 평가 요약
 
-Date: 2026-05-29
+작성일: 2026-05-29
 
-## Bottom Line
+## 결론
 
-The current public-data benchmark is not sufficient to claim that Gaia can diagnose and prescribe soil-state interventions from soil microbiomes.
+현재 공개 데이터 벤치마크만으로는 Gaia가 토양 미생물 데이터만 보고 토양 상태를 진단하고 처방할 수 있다고 주장할 수 없습니다.
 
-It can support a limited diagnostic prototype for pH-like soil-state signals, but the result still fails the honest diagnostic gate because the microbiome matrix strongly encodes site identity. It also fails the prescription gate because there is no intervention, control-plot, follow-up outcome dataset.
+현재 결과는 pH 같은 일부 토양 상태 신호에 대한 제한적인 진단 프로토타입 가능성은 보여줍니다. 하지만 정직한 진단 기준에서는 실패했습니다. 이유는 미생물 feature만으로도 시료가 어느 site에서 왔는지 너무 잘 맞출 수 있기 때문입니다. 즉 모델이 토양 상태 자체가 아니라 site fingerprint를 학습했을 가능성이 큽니다.
 
-## What Was Fixed
+처방 기준은 더 명확하게 실패입니다. 현재 데이터에는 개입 기록, 대조구, 처리 후 추적 결과가 없어서 어떤 처방이 토양 상태를 실제로 개선했는지 학습할 수 없습니다.
 
-- Added explicit diagnostic and prescription acceptance gates.
-- Added shortcut-resistant evaluation helpers: mean/majority baselines, leave-group-out validation, and shortcut probes.
-- Added soil microbiome cleaning utilities: taxon canonicalization, invalid taxon filtering, prevalence filtering, relative abundance, CLR transform, and cross-dataset feature alignment.
-- Added reproducible scripts to build cleaned soil-state datasets and run the honest benchmark.
-- Updated CLI reporting so old checkpoint R2 values are described as source-validation scores, not reliable deployment confidence.
+## 이번에 고친 것
 
-## Data Used
+- 진단 모델과 처방 모델을 분리한 통과 기준을 추가했습니다.
+- 평균 baseline, 다수 class baseline, leave-group-out 검증, shortcut probe를 추가했습니다.
+- 토양 미생물 abundance 정제 코드를 추가했습니다.
+- taxon 이름 정규화, 모호한 taxon 제거, prevalence filter, relative abundance 변환, CLR 변환, 데이터셋 간 feature 정렬을 추가했습니다.
+- 공개 데이터에서 정제된 토양 상태 벤치마크 데이터를 생성하는 스크립트를 추가했습니다.
+- 정직한 벤치마크를 실제로 돌리는 스크립트를 추가했습니다.
+- 기존 CLI 리포트에서 checkpoint R2를 실제 배포 신뢰도로 보이지 않게 경고 문구를 붙였습니다.
 
-| Dataset | Samples | Groups | Target | Notes |
+## 사용한 데이터
+
+| 데이터셋 | 샘플 수 | 그룹 수 | 타깃 | 비고 |
 |---|---:|---:|---|---|
-| NEON | 2,482 | 20 sites | pH | Site-level mean pH joined to microbiome samples; useful for stress testing, not per-sample calibrated chemistry. |
-| Westerfeld | 192 | 3 years | pH, total carbon, total nitrogen | Paired long-term field-trial microbiome and soil chemistry. |
-| Bernburg | 94 | 3 years | pH, total carbon, total nitrogen, organic matter | Paired long-term field-trial microbiome and soil chemistry. |
+| NEON | 2,482 | 20 sites | pH | site-level 평균 pH를 미생물 샘플에 붙인 데이터입니다. cross-site stress test에는 쓸 수 있지만, per-sample 토양 화학값은 아닙니다. |
+| Westerfeld | 192 | 3 years | pH, total carbon, total nitrogen | 장기 포장시험의 미생물과 토양 화학 paired 데이터입니다. |
+| Bernburg | 94 | 3 years | pH, total carbon, total nitrogen, organic matter | 장기 포장시험의 미생물과 토양 화학 paired 데이터입니다. |
 
-Processed files are stored under `data/processed_real/soil_state_*.csv`.
+처리된 파일은 `data/processed_real/soil_state_*.csv`에 있습니다.
 
-## Cleaning Results
+## 데이터 정제 결과
 
-| Dataset | Original Features | Valid Taxa | Kept After Prevalence Filter | Dropped Invalid Taxa | Dropped Low-Prevalence |
+| 데이터셋 | 원본 feature | 유효 taxon | prevalence filter 후 유지 | 제거된 모호 taxon | 제거된 저빈도 taxon |
 |---|---:|---:|---:|---:|---:|
 | NEON | 1,088 | 986 | 315 | 102 | 671 |
 | Westerfeld | 1,864 | 1,813 | 1,107 | 51 | 706 |
 | Bernburg | 780 | 744 | 607 | 36 | 137 |
 
-## Benchmark Results
+## 모델 평가 결과
 
-### NEON Leave-Site-Out pH
+### NEON leave-site-out pH 예측
 
-Best model: `RandomForest_CLR`
+최고 성능 모델: `RandomForest_CLR`
 
-| Metric | Value |
+| 지표 | 값 |
 |---|---:|
 | OOF R2 | 0.659 |
 | OOF RMSE | 0.805 |
 | OOF MAE | 0.612 |
-| Mean fold R2 | 0.295 |
-| RMSE improvement over train-mean baseline | 0.678 |
+| fold 평균 R2 | 0.295 |
+| train-mean baseline 대비 RMSE 개선 | 0.678 |
 
-This beats a naive mean baseline, but it does not pass the diagnostic gate because the shortcut probe shows that site identity is highly recoverable from the microbiome features.
+평균 baseline은 이겼습니다. 하지만 이것만으로 진단 모델이 됐다고 볼 수 없습니다. shortcut probe에서 site identity가 너무 강하게 복원됐기 때문입니다.
 
-### Shortcut Probe
+### Shortcut probe
 
-| Metric | Value |
+| 지표 | 값 |
 |---|---:|
-| Site prediction accuracy | 0.730 |
-| Majority baseline accuracy | 0.094 |
-| Accuracy over majority baseline | 0.636 |
-| Allowed threshold | 0.250 |
+| site 예측 정확도 | 0.730 |
+| majority baseline 정확도 | 0.094 |
+| majority baseline 대비 정확도 증가 | 0.636 |
+| 허용 기준 | 0.250 |
 
-Interpretation: the model is learning substantial site/protocol/ecology fingerprint information. This makes the apparent diagnostic performance unsafe to treat as generalizable soil-state diagnosis.
+해석: 미생물 feature 안에 site, protocol, 생태권역 fingerprint가 강하게 들어 있습니다. 그래서 모델 성능의 상당 부분이 일반화 가능한 토양 상태 신호가 아니라 site 구분 능력에서 나왔을 가능성이 큽니다.
 
-### Cross-Dataset Transfer: Westerfeld to Bernburg pH
+### 외부 데이터셋 전이: Westerfeld에서 학습, Bernburg pH 예측
 
-| Model | R2 | RMSE | Mean Baseline RMSE | RMSE Improvement |
+| 모델 | R2 | RMSE | mean baseline RMSE | RMSE 개선 |
 |---|---:|---:|---:|---:|
 | Ridge_CLR | -7.491 | 0.296 | 0.218 | -0.078 |
 | RandomForest_CLR | -1.733 | 0.168 | 0.218 | 0.050 |
 
-Interpretation: external transfer is still weak. Random forest improves RMSE slightly over the mean baseline, but R2 remains negative, so this is not deployment-grade generalization.
+해석: 데이터셋 간 전이 성능은 아직 약합니다. RandomForest는 RMSE 기준으로 평균 baseline보다 조금 낫지만, R2가 음수라서 배포 가능한 일반화 성능이라고 보기 어렵습니다.
 
-## Gate Status
+## 기준 통과 여부
 
-| Gate | Status | Reason |
+| 기준 | 상태 | 이유 |
 |---|---|---|
-| Diagnostic | Fail | Sample count, group count, group R2, and baseline improvement pass; shortcut probe fails. |
-| Prescription | Fail | No intervention records, intervention types, sites, follow-up months, or control plots. |
+| 진단 기준 | 실패 | 샘플 수, 그룹 수, group R2, baseline 개선은 통과했지만 shortcut probe가 실패했습니다. |
+| 처방 기준 | 실패 | 개입 기록, 개입 종류, site 수, 추적 기간, 대조구가 없습니다. |
 
-## Data Required For The Real Product Goal
+## 실제 제품 목표를 위해 필요한 데이터
 
-To diagnose and prescribe soil state from soil microbiomes, the next dataset must be plot-level and longitudinal:
+토양 미생물로 토양 상태를 진단하고 처방하려면 다음 형태의 plot-level longitudinal 데이터가 필요합니다.
 
-- Microbiome before treatment.
-- Soil chemistry before treatment: pH, organic matter, total carbon, total nitrogen, phosphorus, potassium, CEC, moisture, texture.
-- Management/intervention records: lime, compost, fertilizer, cover crop, tillage, irrigation, pesticide, inoculant, application amount, timing, and method.
-- Soil chemistry after treatment at 3+ months.
-- Plant or agronomic outcome after treatment: yield, biomass, disease pressure, crop quality, or recovery score.
-- Control plots or untreated matched plots.
-- Site, crop, climate, sampling depth, sequencing protocol, and lab metadata.
+- 처리 전 미생물 abundance 또는 ASV/genus profile
+- 처리 전 토양 화학값: pH, organic matter, total carbon, total nitrogen, phosphorus, potassium, CEC, moisture, texture
+- 관리 및 개입 기록: lime, compost, fertilizer, cover crop, tillage, irrigation, pesticide, inoculant, 투입량, 시점, 처리 방법
+- 처리 후 3개월 이상 지난 토양 화학값
+- 처리 후 식물 또는 농업 outcome: 수확량, biomass, 병해 압력, 품질, 회복 점수
+- 무처리 대조구 또는 matched control plot
+- site, 작물, 기후, sampling depth, sequencing protocol, lab metadata
 
-Without this intervention/outcome layer, Gaia can estimate correlations between taxa and soil properties, but it cannot recommend reliable prescriptions.
+이 개입과 outcome layer가 없으면 Gaia는 taxon과 토양 속성 사이의 상관관계는 추정할 수 있지만, 신뢰할 수 있는 처방은 만들 수 없습니다.
 
-## Reproduction Commands
+## 재현 명령
 
 ```powershell
 python scripts\build_soil_state_datasets.py
