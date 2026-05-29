@@ -38,8 +38,8 @@
   "diagnostic_report_for_gate": {
     "n_samples": 2482,
     "n_groups": 20,
-    "group_r2_mean": 0.2951020203929797,
-    "rmse_improvement_over_mean": 0.6784403449895758,
+    "group_r2_mean": 0.29510202039297967,
+    "rmse_improvement_over_mean": 0.678440344989576,
     "shortcut_accuracy_over_majority": 0.6361867098158565
   },
   "neon_leave_one_site_out": [
@@ -150,7 +150,7 @@
       "n_samples": 2482,
       "n_groups": 20,
       "n_features": 315,
-      "r2_oof": 0.6590021543373956,
+      "r2_oof": 0.6590021543373955,
       "rmse_oof": 0.8052059254991322,
       "mae_oof": 0.6120147564782242,
       "folds": [
@@ -181,12 +181,12 @@
             "KONA",
             "MOAB"
           ],
-          "r2": 0.22322514349358868,
-          "rmse": 0.7868181520035439,
-          "mae": 0.5807986221066099,
+          "r2": 0.2232251434935889,
+          "rmse": 0.7868181520035437,
+          "mae": 0.5807986221066098,
           "mean_baseline_r2": -2.0439363491515508,
           "mean_baseline_rmse": 1.5575592426636073,
-          "rmse_improvement_over_mean": 0.7707410906600635
+          "rmse_improvement_over_mean": 0.7707410906600637
         },
         {
           "fold": 3,
@@ -199,11 +199,11 @@
             "KONZ"
           ],
           "r2": 0.5494384971415536,
-          "rmse": 1.0590940924617702,
+          "rmse": 1.05909409246177,
           "mae": 0.9154787096398139,
           "mean_baseline_r2": -0.007512847656798272,
           "mean_baseline_rmse": 1.5837360451054026,
-          "rmse_improvement_over_mean": 0.5246419526436323
+          "rmse_improvement_over_mean": 0.5246419526436326
         },
         {
           "fold": 4,
@@ -215,12 +215,12 @@
             "DSNY",
             "MLBS"
           ],
-          "r2": 0.02754310369783053,
-          "rmse": 0.9476192438455904,
+          "r2": 0.027543103697830196,
+          "rmse": 0.9476192438455905,
           "mae": 0.7969942145850978,
           "mean_baseline_r2": -0.36908748237183886,
           "mean_baseline_rmse": 1.1243830530330956,
-          "rmse_improvement_over_mean": 0.17676380918750523
+          "rmse_improvement_over_mean": 0.17676380918750512
         },
         {
           "fold": 5,
@@ -234,14 +234,14 @@
           ],
           "r2": 0.8575215957672878,
           "rmse": 0.625166825866474,
-          "mae": 0.4635081768985353,
+          "mae": 0.4635081768985352,
           "mean_baseline_r2": -0.057471765464898183,
           "mean_baseline_rmse": 1.703161351520186,
           "rmse_improvement_over_mean": 1.077994525653712
         }
       ],
-      "group_r2_mean": 0.2951020203929797,
-      "rmse_improvement_over_mean": 0.6784403449895758
+      "group_r2_mean": 0.29510202039297967,
+      "rmse_improvement_over_mean": 0.678440344989576
     }
   ],
   "westerfeld_to_bernburg": [
@@ -266,12 +266,12 @@
       "n_train": 192,
       "n_test": 94,
       "n_features": 1261,
-      "r2": -1.7329132580554845,
-      "rmse": 0.1681572725120079,
-      "mae": 0.14808032224473466,
+      "r2": -1.732913258055481,
+      "rmse": 0.1681572725120078,
+      "mae": 0.14808032224473472,
       "mean_baseline_r2": -3.6060852368427465,
       "mean_baseline_rmse": 0.2183075300397159,
-      "rmse_improvement_over_mean": 0.05015025752770799
+      "rmse_improvement_over_mean": 0.0501502575277081
     }
   ],
   "shortcut_probe_neon_site": {

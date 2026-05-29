@@ -4,7 +4,7 @@ Outputs:
   data/processed_real/soil_state_neon_ph.csv
   data/processed_real/soil_state_westerfeld.csv
   data/processed_real/soil_state_bernburg.csv
-  docs/soil_state_data_manifest.json
+  data/processed_real/soil_state_data_manifest.json
 """
 
 from __future__ import annotations
@@ -21,7 +21,6 @@ from gaia.preprocessing.soil_state import clean_abundance_table, relative_abunda
 
 
 OUT_DIR = Path("data/processed_real")
-DOCS_DIR = Path("docs")
 
 
 def build_neon() -> tuple[pd.DataFrame, dict]:
@@ -161,7 +160,6 @@ def build_bernburg() -> tuple[pd.DataFrame, dict]:
 
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
     neon, neon_report = build_neon()
     westerfeld, westerfeld_report = build_westerfeld()
@@ -200,7 +198,7 @@ def main() -> None:
             "paired chemistry datasets but remain small and European."
         ),
     }
-    (DOCS_DIR / "soil_state_data_manifest.json").write_text(
+    (OUT_DIR / "soil_state_data_manifest.json").write_text(
         json.dumps(manifest, indent=2),
         encoding="utf-8",
     )

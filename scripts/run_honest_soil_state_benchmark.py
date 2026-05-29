@@ -27,7 +27,7 @@ from gaia.evaluation.honest import (
 from gaia.preprocessing.soil_state import clr_matrix
 
 
-OUT = Path("docs/honest_soil_state_benchmark.json")
+OUT = Path("data/processed_real/honest_soil_state_benchmark.json")
 
 
 def _feature_cols(df: pd.DataFrame) -> list[str]:
@@ -221,6 +221,7 @@ def main() -> None:
             "Passing prescription is impossible without intervention/outcome data."
         ),
     }
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps(result, indent=2))
 
