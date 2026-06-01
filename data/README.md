@@ -12,9 +12,9 @@
 
 ## Directory Structure
 
-- `scripts/` - Data collection and preprocessing scripts
+- Data collection scripts live in `../scripts/data_collection/`; dataset build scripts live in `../scripts/data/`.
 - `configs/` - Per-source configuration files
 
 ## Data Standards
 
-See [docs/data_standard.md](../docs/data_standard.md) for the full data standardization protocol.
+See [docs/standards/data_standard.md](../docs/standards/data_standard.md) for the full data standardization protocol.

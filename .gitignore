@@ -29,9 +29,9 @@ data/processed/
 data/processed_real/gaia-abundance-v2.csv
 
 # LaTeX build artifacts
-docs/paper/*.aux
-docs/paper/*.out
-docs/paper/*.log
+manuscripts/gaia/*.aux
+manuscripts/gaia/*.out
+manuscripts/gaia/*.log
 
 # Model weights (large)
 *.pt

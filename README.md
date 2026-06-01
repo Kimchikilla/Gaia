@@ -19,7 +19,7 @@ The `gaia-corpus` dataset has been downloaded ~2,770 times in the last 30 days o
 - **Pre-trained Foundation Model**: 8-layer GPT-style transformer pre-trained on **7,170 soil microbiome sequences** from MGnify and EMP (v2 corpus); v1 (~2k) corpus also available
 - **Soil Health Diagnosis**: Predict soil chemical properties (pH R²=0.95, total carbon R²=0.88, total nitrogen R²=0.88 on Westerfeld in-distribution; pH R²=0.59, C R²=0.72, N R²=0.73 OOD on Bernburg) from microbial profiles
 - **Cross-Site OOD**: Outperforms RandomForest on 5/6 linear-probe tasks and 3/3 zero-shot Westerfeld→Bernburg tasks; loses on yield regression
-- **Drought Stress Detection**: Binary classification benchmarked on Naylor (USA Sorghum) — see [docs/benchmark_naylor.json](docs/benchmark_naylor.json)
+- **Drought Stress Detection**: Binary classification benchmarked on Naylor (USA Sorghum) — see [artifacts/benchmarks/benchmark_naylor.json](artifacts/benchmarks/benchmark_naylor.json)
 - **Inverse Design (consortium recommendation)**: Given a target (pH, C, N), retrieve and aggregate microbial profiles from reference samples whose embeddings best match the target
 - **CLI Tool**: `gaia diagnose abundance.csv` produces JSON or Markdown soil-health reports; `gaia design --ph 6.5 --carbon 1.8 --nitrogen 0.18` recommends a consortium
 
@@ -73,13 +73,25 @@ gaia/
 ├── LICENSE                    # Apache 2.0
 ├── CONTRIBUTING.md
 ├── docs/
-│   ├── roadmap.md
-│   ├── data_standard.md       # Data standardization guide
-│   └── tutorials/
+│   ├── README.md              # Documentation index
+│   ├── reports/               # Evaluation and data-collection summaries
+│   ├── standards/             # Data and prescription criteria
+│   └── logs/                  # Historical training logs
+├── artifacts/
+│   ├── benchmarks/            # JSON benchmark outputs
+│   └── figures/               # Generated figures
+├── manuscripts/
+│   └── gaia/                  # Paper source, figures, and PDFs
 ├── data/
-│   ├── scripts/               # Data collection & preprocessing scripts
 │   ├── configs/               # Data source configurations
 │   └── README.md              # Data catalog
+├── scripts/
+│   ├── analysis/
+│   ├── benchmarks/
+│   ├── data/
+│   ├── data_collection/
+│   ├── evaluation/
+│   └── training/
 ├── gaia/
 │   ├── preprocessing/         # Preprocessing modules
 │   ├── models/                # Model architectures
@@ -148,9 +160,9 @@ What this implies for the README's mission:
 
 ## Known Limitations
 
-These are honest caveats from internal validation work (`scripts/validate_diagnostic_heads.py`, `scripts/leave_one_country_out.py`, `scripts/geo_embedding_analysis.py`).
+These are honest caveats from internal validation work (`scripts/evaluation/validate_diagnostic_heads.py`, `scripts/evaluation/leave_one_country_out.py`, `scripts/analysis/geo_embedding_analysis.py`).
 
-1. **Strong batch / country signal in embeddings.** A logistic-regression probe over `gaia_v6` embeddings recovers the country of an EMP soil sample at 5-fold CV accuracy **0.94** (16 countries, majority baseline 0.44). UMAP shows nearly perfect country clusters (`docs/geo_umap.png`). This very likely reflects laboratory / sequencing-platform fingerprints, not just real biological geography.
+1. **Strong batch / country signal in embeddings.** A logistic-regression probe over `gaia_v6` embeddings recovers the country of an EMP soil sample at 5-fold CV accuracy **0.94** (16 countries, majority baseline 0.44). UMAP shows nearly perfect country clusters (`artifacts/figures/geo_umap.png`). This very likely reflects laboratory / sequencing-platform fingerprints, not just real biological geography.
 
 2. **Leave-one-country-out (LOCO) confirms batch shortcut.** When the same biome classifier is asked to predict on a country that was held out from training:
    - Random in-distribution split: acc **0.96**

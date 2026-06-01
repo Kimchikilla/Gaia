@@ -17,7 +17,7 @@
 - **사전학습 모델**: MGnify + EMP v2 코퍼스 7,170개 시퀀스로 사전학습한 GPT 스타일 Transformer (8 레이어, 256d)
 - **토양 화학 예측**: pH R²=0.95, 총탄소 R²=0.88, 총질소 R²=0.88 (Westerfeld 인디스트리뷰션). Bernburg OOD 에서는 pH=0.59, C=0.72, N=0.73
 - **사이트 간 OOD**: linear probe 5/6, zero-shot 3/3 에서 RandomForest 보다 R² 높음. 수확량 회귀에서는 RF 에 짐
-- **가뭄 분류**: Naylor (미국 캘리포니아 수수) 데이터에서 OOD 검증 — `docs/benchmark_naylor.json`
+- **가뭄 분류**: Naylor (미국 캘리포니아 수수) 데이터에서 OOD 검증 — `artifacts/benchmarks/benchmark_naylor.json`
 - **컨소시엄 추천 (역설계)**: 목표 (pH, C, N) 입력 → 임베딩이 가장 가까운 실제 샘플 k개를 가중평균해 추천 속 출력
 - **CLI**: `gaia diagnose abundance.csv` (JSON/Markdown 보고서), `gaia design --ph 6.5 --carbon 1.8 --nitrogen 0.18` (컨소시엄 추천)
 
@@ -72,13 +72,25 @@ gaia/
 ├── LICENSE                    # Apache 2.0
 ├── CONTRIBUTING.md
 ├── docs/
-│   ├── roadmap.md
-│   ├── data_standard.md       # 데이터 표준화 가이드
-│   └── tutorials/
+│   ├── README.md              # 문서 인덱스
+│   ├── reports/               # 평가·데이터 수집 요약
+│   ├── standards/             # 데이터·처방 기준
+│   └── logs/                  # 과거 학습 로그
+├── artifacts/
+│   ├── benchmarks/            # JSON 벤치마크 산출물
+│   └── figures/               # 생성 그림
+├── manuscripts/
+│   └── gaia/                  # 논문 원고, 그림, PDF
 ├── data/
-│   ├── scripts/               # 데이터 수집·전처리 스크립트
 │   ├── configs/               # 데이터 소스별 설정
 │   └── README.md              # 데이터 카탈로그
+├── scripts/
+│   ├── analysis/
+│   ├── benchmarks/
+│   ├── data/
+│   ├── data_collection/
+│   ├── evaluation/
+│   └── training/
 ├── gaia/
 │   ├── preprocessing/         # 전처리 모듈
 │   ├── models/                # 모델 아키텍처
@@ -147,9 +159,9 @@ v9 가 말해주는 것:
 
 ## 알려진 한계
 
-내부 검증 결과(`scripts/validate_diagnostic_heads.py`, `scripts/leave_one_country_out.py`, `scripts/geo_embedding_analysis.py`)에서 나온 솔직한 caveat:
+내부 검증 결과(`scripts/evaluation/validate_diagnostic_heads.py`, `scripts/evaluation/leave_one_country_out.py`, `scripts/analysis/geo_embedding_analysis.py`)에서 나온 솔직한 caveat:
 
-1. **임베딩에 batch / country 신호가 강함.** v6 임베딩 위에서 logistic regression 으로 EMP 샘플의 country 를 분류하면 5-fold CV 정확도 **0.94** (16개국, majority baseline 0.44). UMAP 시각화에서도 country 별로 거의 완벽하게 분리됨 (`docs/geo_umap.png`). 이 신호는 진짜 지리적 미생물 차이라기보단 lab/sequencing-platform fingerprint 일 가능성 높음.
+1. **임베딩에 batch / country 신호가 강함.** v6 임베딩 위에서 logistic regression 으로 EMP 샘플의 country 를 분류하면 5-fold CV 정확도 **0.94** (16개국, majority baseline 0.44). UMAP 시각화에서도 country 별로 거의 완벽하게 분리됨 (`artifacts/figures/geo_umap.png`). 이 신호는 진짜 지리적 미생물 차이라기보단 lab/sequencing-platform fingerprint 일 가능성 높음.
 
 2. **Leave-one-country-out (LOCO) 가 batch shortcut 가설을 확인.** 같은 biome 분류 모델을 한 country 빼고 학습 후 그 country 에서 테스트:
    - Random 80/20: acc **0.96**
